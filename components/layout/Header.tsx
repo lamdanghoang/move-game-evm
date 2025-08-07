@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { WalletSelector, WalletSelectorMobile } from "../wallet/ConnectButton";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 const Header = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -74,7 +75,7 @@ const Header = () => {
 
                     {/* Connect Wallet Button */}
                     <div className="hidden md:flex items-center space-x-4">
-                        <WalletSelector />
+                        <ConnectButton showBalance={false} chainStatus="none" />
                     </div>
 
                     {/* Mobile Menu Button */}
