@@ -65,6 +65,7 @@ const SlotMachine = () => {
         handleClaimAll,
         isSpinning,
         isLoading,
+        isSuccess,
         isClaiming,
         spinError,
         claimError,
@@ -211,7 +212,6 @@ const SlotMachine = () => {
 
             // Convert contract values from string to number
             const payoutAmount = Number(formatEther(contractResult.payout));
-            const multiplierValue = formatEther(contractResult.multiplier);
 
             // Check if it's a win (payout > 0)
             const isWin = +payoutAmount > 0;
@@ -228,7 +228,7 @@ const SlotMachine = () => {
                     setWinMessage(
                         `🎉 ${winTypeMsg}! You won ${payoutAmount.toFixed(
                             3
-                        )} ETH! (${multiplierValue}x)`
+                        )} ETH! (${contractResult.multiplier}x)`
                     );
                 }
 
