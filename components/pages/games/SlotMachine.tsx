@@ -1,16 +1,15 @@
 "use client";
 
-import {
-    SpinResult,
-    useAccountBalance,
-    useClaimAllPayout,
-    useJackpotBalance,
-    usePendingReward,
-    useSpinSlot,
-} from "@/hooks/useContract";
-import { fromSuiU64 } from "@/lib/utils";
 import { useState, useRef, useEffect, useCallback } from "react";
+import {
+    useContractBalance,
+    useCurrentAccountBalance,
+    useSlotMachineContract,
+    SpinResult,
+    useTotalPendingRewards,
+} from "@/hooks/useSlotMachineContract";
 import { toast } from "sonner";
+import { parseEther, formatEther } from "viem";
 
 const SYMBOLS: string[] = [
     "🍒",
@@ -59,25 +58,26 @@ const createReelSymbols = (symbols: string[], count = 30): string[] => {
 const SlotMachine = () => {
     const [showWinFlash, setShowWinFlash] = useState(false);
     const [winMessage, setWinMessage] = useState<string>("");
-    const [isSpinning, setIsSpinning] = useState<boolean>(false);
     const [bet, setBet] = useState(0.01);
 
-    const { spinSlot, spinResult, isLoading, error, digest } = useSpinSlot();
     const {
-        claimAllPayout,
-        isLoading: isClaiming,
-        error: claimErr,
-        digest: claimDigest,
-    } = useClaimAllPayout();
+        handleStartSpin: spinSlot,
+        handleClaimAll,
+        isSpinning,
+        isLoading,
+        isClaiming,
+        spinError,
+        claimError,
+        spinResult,
+        claimDigest,
+    } = useSlotMachineContract();
 
-    const { accountBalance, refetch: refetchBalance } = useAccountBalance();
-
-    const { jackpotBalance, refetch: refetchJackpot } = useJackpotBalance();
-    const {
-        pendingAmount,
-        lastestWin,
-        refetch: refetchPending,
-    } = usePendingReward();
+    const { balance: poolBalance, refetch: refetchJackpot } =
+        useContractBalance();
+    const { balance: accountBalance, refetch: refetchBalance } =
+        useCurrentAccountBalance();
+    const { totalPendingRewards, refetch: refetchPending } =
+        useTotalPendingRewards();
 
     // State to hold the symbols for each reel
     const [reelSymbols, setReelSymbols] = useState<string[][]>(() =>
@@ -116,7 +116,6 @@ const SlotMachine = () => {
         (resultSymbols: string[]) => {
             if (isSpinning) return;
 
-            setIsSpinning(true);
             setWinMessage("");
             setShowWinFlash(false);
             spinResultsRef.current = [];
@@ -204,33 +203,32 @@ const SlotMachine = () => {
 
     // Check win condition using contract data
     const checkWinCondition = useCallback(
-        (contractResult: SpinResult) => {
+        (contractResult: SpinResult | null) => {
             if (!contractResult) {
                 setWinMessage("❌ No result received!");
-                setIsSpinning(false);
                 return;
             }
 
             // Convert contract values from string to number
-            const payoutAmount = fromSuiU64(contractResult.payout);
-            const multiplierValue = parseFloat(contractResult.multiplier);
+            const payoutAmount = Number(formatEther(contractResult.payout));
+            const multiplierValue = formatEther(contractResult.multiplier);
 
             // Check if it's a win (payout > 0)
-            const isWin = payoutAmount > 0;
+            const isWin = +payoutAmount > 0;
 
             if (isWin) {
                 // Handle jackpot win
-                if (contractResult.is_jackpot) {
+                if (contractResult.isJackpot) {
                     setWinMessage(
                         `🎰 JACKPOT! You won ${payoutAmount.toFixed(3)} SUI!`
                     );
                 } else {
                     // Regular win with win type
-                    const winTypeMsg = contractResult.win_type || "WIN";
+                    const winTypeMsg = contractResult.winType || "WIN";
                     setWinMessage(
                         `🎉 ${winTypeMsg}! You won ${payoutAmount.toFixed(
                             3
-                        )} SUI! (${multiplierValue}x)`
+                        )} ETH! (${multiplierValue}x)`
                     );
                 }
 
@@ -246,21 +244,15 @@ const SlotMachine = () => {
                 setWinMessage("❌ Try again!");
             }
 
-            setIsSpinning(false);
             refetchAll();
         },
         [spinResult]
     );
 
-    const handleSpinClick = async () => {
-        if (isSpinning || isLoading) return;
+    const handleSpinClick = () => {
+        if (isSpinning) return;
 
-        try {
-            await spinSlot(bet);
-        } catch (err) {
-            console.error("Spin failed:", err);
-            setIsSpinning(false);
-        }
+        spinSlot(parseEther(`${bet}`));
     };
 
     // Handle spin result from contract
@@ -284,17 +276,16 @@ const SlotMachine = () => {
 
     // Handle contract errors
     useEffect(() => {
-        if (error) {
-            setIsSpinning(false);
-            setWinMessage(`❌ Error: ${error.message}`);
+        if (spinError) {
+            setWinMessage(`❌ Error: ${spinError.message}`);
         }
-    }, [error]);
+    }, [spinError]);
 
     useEffect(() => {
-        if (claimErr) {
+        if (claimError) {
             toast.error("Failed to claim reward");
         }
-    }, [claimErr]);
+    }, [claimError]);
 
     const refetchAll = () => {
         refetchBalance();
@@ -417,10 +408,8 @@ const SlotMachine = () => {
                                 GAME POOL
                             </div>
                             <div className="text-2xl font-bold text-white tracking-wider font-mono">
-                                {jackpotBalance !== null
-                                    ? `${fromSuiU64(jackpotBalance).toFixed(
-                                          3
-                                      )} SUI`
+                                {Number(poolBalance)
+                                    ? `${poolBalance} ETH`
                                     : "LOADING POOL..."}
                             </div>
                         </div>
@@ -489,11 +478,11 @@ const SlotMachine = () => {
                             }`}
                         >
                             <div className="flex items-center justify-center gap-2">
-                                {spinResult?.is_jackpot && "🎰"}
+                                {spinResult?.isJackpot && "🎰"}
                                 <span>{winMessage}</span>
-                                {spinResult?.is_jackpot && "🎰"}
+                                {spinResult?.isJackpot && "🎰"}
                             </div>
-                            {spinResult?.is_jackpot && (
+                            {spinResult?.isJackpot && (
                                 <div className="text-sm text-yellow-300 mt-1 animate-pulse">
                                     JACKPOT WINNER!
                                 </div>
@@ -526,7 +515,7 @@ const SlotMachine = () => {
                                             }
                                         `}
                                 >
-                                    {amount} SUI
+                                    {amount} ETH
                                 </button>
                             ))}
                         </div>
@@ -540,13 +529,13 @@ const SlotMachine = () => {
                                     rounded-2xl px-8 py-4 shadow-lg border-2 border-cyan-300 
                                     transform transition-all duration-200 min-w-[160px]
                                     ${
-                                        isSpinning || isLoading
+                                        isSpinning
                                             ? "opacity-50 cursor-not-allowed scale-95"
                                             : "hover:scale-105 active:scale-95 shadow-cyan-500/50 cursor-pointer hover:shadow-xl"
                                     }
                                 `}
                             onClick={handleSpinClick}
-                            disabled={isSpinning || isLoading}
+                            disabled={isSpinning}
                         >
                             {/* Button shine effect */}
                             <div className="absolute inset-0 bg-gradient-to-t from-transparent to-white/20 rounded-2xl"></div>
@@ -585,12 +574,12 @@ const SlotMachine = () => {
                                 </div>
                                 <div className="text-cyan-200 text-lg font-mono bg-black/50 rounded px-3 py-1">
                                     {accountBalance
-                                        ? fromSuiU64(accountBalance).toFixed(3)
+                                        ? Number(accountBalance).toFixed(3)
                                         : 0}{" "}
-                                    SUI
+                                    ETH
                                 </div>
                             </div>
-                            <div className="flex justify-between items-center">
+                            {/* <div className="flex justify-between items-center">
                                 <div className="text-gray-300 text-sm font-semibold tracking-wider">
                                     LAST WIN
                                 </div>
@@ -603,22 +592,26 @@ const SlotMachine = () => {
                                 >
                                     {fromSuiU64(lastestWin).toFixed(3)} SUI
                                 </div>
-                            </div>
+                            </div> */}
                             <div className="flex justify-between items-center">
                                 <div className="text-gray-300 text-sm font-semibold tracking-wider">
                                     PENDING
                                 </div>
                                 <div className="text-orange-300 text-lg font-mono bg-black/50 rounded px-3 py-1">
-                                    {fromSuiU64(pendingAmount).toFixed(3)} SUI
+                                    {Number(
+                                        formatEther(totalPendingRewards)
+                                    ).toFixed(3)}{" "}
+                                    ETH
                                 </div>
                             </div>
                         </div>
 
                         {/* Claim Button */}
-                        {1 > 0 && (
-                            <div className="mt-4">
+
+                        <div className="mt-4">
+                            {totalPendingRewards > BigInt(0) ? (
                                 <button
-                                    onClick={() => claimAllPayout()}
+                                    onClick={() => handleClaimAll()}
                                     disabled={isClaiming}
                                     className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 text-white font-bold py-2 px-4 rounded-lg hover:scale-105 transform transition-all duration-200 shadow-lg hover:shadow-orange-500/50"
                                 >
@@ -626,8 +619,15 @@ const SlotMachine = () => {
                                         ? "CLAIMING..."
                                         : "CLAIM ALL PAYOUT"}
                                 </button>
-                            </div>
-                        )}
+                            ) : (
+                                <button
+                                    disabled
+                                    className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 text-white font-bold py-2 px-4 rounded-lg transform transition-all duration-200 shadow-lg opacity-80"
+                                >
+                                    NO PAYOUT
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>

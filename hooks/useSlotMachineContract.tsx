@@ -1,212 +1,253 @@
 "use client";
+
 import {
-    useCurrentAccount,
-    useSignAndExecuteTransaction,
-    useSuiClient,
-} from "@mysten/dapp-kit";
-import { SuiEvent, SuiObjectChange } from "@mysten/sui/client";
-import { Transaction } from "@mysten/sui/transactions";
+    useAccount,
+    useBalance,
+    usePublicClient,
+    useReadContract,
+    useWatchBlocks,
+    useWriteContract,
+    useWatchContractEvent,
+} from "wagmi";
+import { SLOT_MACHINE_CONTRACT } from "@/constants/contract";
 import { useCallback, useEffect, useState } from "react";
+import { formatEther, parseEther } from "viem";
 
-const PACKAGE_ID =
-    "0xfc3ba8afd758a5ae4298eb8ae80069831e4d1536b4cf70925b7b843dd39f264d";
-const MODULE = "slot_machine";
-const FUNCTION = "spin_slots";
-const CASINO_ID =
-    "0x4b0f90c39cc7de9a6f5327590195d6b6d2ee0d347a37e795488841c8b8d56b21";
+// Type definitions for EVM contract
+export interface SpinResult {
+    player: string;
+    spinId: bigint;
+    betAmount: bigint;
+    reel1: number;
+    reel2: number;
+    reel3: number;
+    payout: bigint;
+    multiplier: bigint;
+    isJackpot: boolean;
+    winType: string;
+    timestamp: bigint;
+}
 
-// Helper function to get the full module ID
+export function useSlotMachineContract() {
+    const [spinResult, setSpinResult] = useState<SpinResult | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [isClaiming, setIsClaiming] = useState(false);
+    const [claimDigest, setClaimDigest] = useState<string | null>(null);
 
-type SpinResult = {
-    reel1: string;
-    reel2: string;
-    reel3: string;
-    payout: string;
-    multiplier: string;
-    is_jackpot: boolean;
-} | null;
+    // 📌 Start a spin (payable)
+    const {
+        writeContract: startSpin,
+        isPending: isSpinning,
+        isSuccess,
+        error: spinError,
+        data: spinData,
+    } = useWriteContract();
 
-export const useSpinSlot = () => {
-    const [digest, setDigest] = useState<string>("");
-    const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [error, setError] = useState<Error | null>(null);
-    const [spinResult, setSpinResult] = useState<SpinResult>(null);
-    const [objectChanges, setObjectChanges] = useState<SuiObjectChange[]>([]);
+    const handleStartSpin = (betAmountWei: bigint) => {
+        setIsLoading(true);
+        startSpin({
+            ...SLOT_MACHINE_CONTRACT,
+            functionName: "spinAndProcess",
+            value: betAmountWei,
+            args: [],
+        });
+    };
 
-    const account = useCurrentAccount();
-    const client = useSuiClient();
+    // 📌 Claim all rewards
+    const {
+        writeContract: claimAll,
+        error: claimError,
+        data: claimData,
+    } = useWriteContract();
 
-    const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction({
-        execute: async ({ bytes, signature }) =>
-            await client.executeTransactionBlock({
-                transactionBlock: bytes,
-                signature,
-                options: {
-                    showRawEffects: true,
-                    showObjectChanges: true,
-                    showEvents: true,
-                },
-            }),
-    });
+    const handleClaimAll = () => {
+        setIsClaiming(true);
+        claimAll({
+            ...SLOT_MACHINE_CONTRACT,
+            functionName: "claimAllRewards",
+            args: [],
+        });
+    };
 
-    // Function with extensive debugging added
-    const spinSlot = useCallback(
-        async (betAmount: number) => {
-            if (!account) {
-                setError(new Error("Wallet not connected"));
-                return;
-            }
-
-            setIsLoading(true);
-            setError(null);
-            setSpinResult(null);
-
-            try {
-                const amount = toSuiU64(betAmount);
-                const txb = new Transaction();
-
-                const [coin] = txb.splitCoins(txb.gas, [
-                    txb.pure.u64(amount), // MIST
-                ]);
-
-                txb.moveCall({
-                    target: `${PACKAGE_ID}::${MODULE}::${FUNCTION}`,
-                    arguments: [
-                        txb.object(CASINO_ID),
-                        coin,
-                        txb.object.random(),
-                    ],
-                });
-
-                signAndExecuteTransaction(
-                    {
-                        transaction: txb,
-                    },
-                    {
-                        onSuccess: (result) => {
-                            setDigest(result.digest);
-                            console.log(result.digest);
-                            setObjectChanges(result.objectChanges || []);
-                            const event = getSlotSpinnedEvent(result.events);
-                            console.log(result.events);
-
-                            if (!event) {
-                                setError(
-                                    new Error("SlotSpinned event not found")
-                                );
-                            } else {
-                                setSpinResult(event);
-                            }
-                        },
-                        onError: (err) => {
-                            console.error("❌ Spin failed:", err);
-                            setError(err);
-                        },
-                        onSettled: () => {
-                            setIsLoading(false);
-                        },
-                    }
-                );
-            } catch (error) {
-                console.error("❌ Unexpected error:", error);
-                setError(error as Error);
-                setIsLoading(false);
+    // Watch for payout calculated events
+    useWatchContractEvent({
+        ...SLOT_MACHINE_CONTRACT,
+        eventName: "PayoutCalculated",
+        onLogs(logs) {
+            console.log("PayoutCalculated event:", logs);
+            if (logs && logs.length > 0) {
+                const log = logs[logs.length - 1] as any;
+                const result: SpinResult = {
+                    player: log.args.player as string,
+                    spinId: log.args.spinId as bigint,
+                    betAmount: log.args.betAmount as bigint,
+                    reel1: Number(log.args.reel1),
+                    reel2: Number(log.args.reel2),
+                    reel3: Number(log.args.reel3),
+                    payout: log.args.payout as bigint,
+                    multiplier: log.args.multiplier as bigint,
+                    isJackpot: log.args.isJackpot as boolean,
+                    winType: log.args.winType as string,
+                    timestamp: log.args.timestamp as bigint,
+                };
+                console.log("Result", result);
+                setSpinResult(result);
             }
         },
-        [account]
-    );
+    });
+
+    // Watch for reward claimed events
+    useWatchContractEvent({
+        ...SLOT_MACHINE_CONTRACT,
+        eventName: "RewardClaimed",
+        onLogs(logs) {
+            console.log("RewardClaimed event:", logs);
+            if (logs && logs.length > 0) {
+                const log = logs[logs.length - 1] as any;
+                setClaimDigest(log.transactionHash);
+            }
+        },
+    });
+
+    // Reset loading state when spin completes
+    useEffect(() => {
+        if (isSuccess && !isSpinning) {
+            setIsLoading(false);
+        }
+    }, [isSuccess, isSpinning]);
+
+    // Reset claiming state when claim completes
+    useEffect(() => {
+        if (claimData && !isClaiming) {
+            setIsClaiming(false);
+        }
+    }, [claimData, isClaiming]);
 
     return {
-        spinSlot,
+        handleStartSpin,
+        isSpinning,
+        isLoading,
+        isSuccess,
+        spinError,
+        claimError,
+        handleClaimAll,
+        isClaiming,
         spinResult,
-        digest,
-        objectChanges,
+        claimDigest,
+    };
+}
+
+export function useContractBalance() {
+    const publicClient = usePublicClient();
+    const [balance, setBalance] = useState<string>("0");
+
+    // Fetch balance from the blockchain
+    const fetchBalance = useCallback(async () => {
+        if (!publicClient) return;
+        try {
+            const rawBalance = await publicClient.getBalance({
+                address: SLOT_MACHINE_CONTRACT.address,
+            });
+            setBalance(formatEther(rawBalance));
+        } catch (err) {
+            console.error("Failed to fetch balance:", err);
+        }
+    }, [publicClient]);
+
+    // Refetch whenever a new block is mined
+    useWatchBlocks({
+        onBlock: () => {
+            fetchBalance();
+        },
+    });
+
+    // Initial fetch
+    useEffect(() => {
+        fetchBalance();
+    }, [fetchBalance]);
+
+    return {
+        balance,
+        refetch: fetchBalance,
+    };
+}
+
+export function useCurrentAccountBalance() {
+    const { address } = useAccount();
+
+    const { data, isLoading, refetch } = useBalance({
+        address,
+    });
+
+    return {
+        balance: formatEther(data?.value || BigInt("0")), // BigInt balance in wei
+        symbol: data?.symbol,
+        isLoading,
+        refetch,
+    };
+}
+
+export interface PendingReward {
+    amount: bigint;
+    spinId: bigint;
+    timestamp: bigint;
+    reel1: number;
+    reel2: number;
+    reel3: number;
+    multiplier: bigint;
+    isJackpot: boolean;
+}
+
+export function usePendingRewards() {
+    const { address } = useAccount();
+
+    const { data, isLoading, error, refetch } = useReadContract({
+        ...SLOT_MACHINE_CONTRACT,
+        functionName: "getPendingRewards",
+        args: address ? [address] : undefined,
+        query: {
+            enabled: !!address,
+        },
+    });
+
+    const rewards: PendingReward[] =
+        (data as any[])?.map((r) => ({
+            amount: r.amount as bigint,
+            spinId: r.spinId as bigint,
+            timestamp: r.timestamp as bigint,
+            reel1: Number(r.reel1),
+            reel2: Number(r.reel2),
+            reel3: Number(r.reel3),
+            multiplier: r.multiplier as bigint,
+            isJackpot: r.isJackpot as boolean,
+        })) ?? [];
+
+    return {
+        rewards,
         isLoading,
         error,
+        refetch,
     };
-};
-
-export const useJackpotBalance = () => {
-    const suiClient = useSuiClient();
-    const [jackpotBalance, setJackpotBalance] = useState<bigint | null>(null);
-
-    const fetchJackpot = async () => {
-        try {
-            const obj = await suiClient.getObject({
-                id: CASINO_ID,
-                options: {
-                    showContent: true,
-                },
-            });
-
-            const content = obj.data?.content;
-            if (
-                content &&
-                content.dataType === "moveObject" &&
-                "fields" in content
-            ) {
-                const fields = content.fields as Record<string, any>;
-                const pool = fields.balance; // balance in MIST
-                setJackpotBalance(pool);
-            }
-        } catch (err) {
-            console.error("Failed to fetch jackpot", err);
-        }
-    };
-
-    useEffect(() => {
-        fetchJackpot();
-    }, []);
-
-    return jackpotBalance;
-};
-
-// Helper
-function getSlotSpinnedEvent(
-    events: SuiEvent[] | undefined | null
-): SpinResult {
-    for (const e of events ?? []) {
-        // Check if it's the correct Move event type
-        if (
-            typeof e.type === "string" &&
-            e.type.includes("::slot_machine::SlotSpinned") &&
-            typeof e.parsedJson === "object" &&
-            e.parsedJson !== null
-        ) {
-            const parsed = e.parsedJson as any;
-
-            return {
-                reel1: parsed.reel1.toString(),
-                reel2: parsed.reel2.toString(),
-                reel3: parsed.reel3.toString(),
-                payout: parsed.payout,
-                multiplier: parsed.multiplier,
-                is_jackpot: parsed.is_jackpot,
-            };
-        }
-    }
-
-    return null;
-}
-// Safer formatting functions
-export function toSuiU64(amount: number): string {
-    if (isNaN(amount) || amount < 0) {
-        throw new Error(`Invalid SUI amount: ${amount}`);
-    }
-
-    try {
-        const scaled = BigInt(Math.floor(amount * 1e9));
-        return scaled.toString();
-    } catch (error) {
-        throw new Error(`Error converting ${amount} to SUI U64:`);
-    }
 }
 
-export function fromSuiU64(u64BigInt: bigint): number {
-    try {
-        const result = Number(u64BigInt) / 1e9;
-        return result;
-    } catch (error) {
-        throw new Error(`Error converting ${u64BigInt} from SUI U64:`);
-    }
+export function useTotalPendingRewards() {
+    const { address } = useAccount();
+
+    const { data, isLoading, error, refetch } = useReadContract({
+        ...SLOT_MACHINE_CONTRACT,
+        functionName: "getTotalPendingAmount",
+        args: address ? [address] : undefined,
+        query: {
+            enabled: !!address,
+        },
+    });
+
+    const totalPendingRewards = (data as bigint) ?? BigInt(0);
+
+    return {
+        totalPendingRewards,
+        isLoading,
+        error,
+        refetch,
+    };
 }

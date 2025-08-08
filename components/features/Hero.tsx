@@ -43,8 +43,8 @@ const Hero = () => {
 
                     {/* Subtitle */}
                     <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto font-exo">
-                        Experience the future of gaming on the Sui blockchain.
-                        Play, earn, and own your digital assets in revolutionary
+                        Experience the future of gaming on the blockchain. Play,
+                        earn, and own your digital assets in revolutionary
                         games.
                     </p>
 
