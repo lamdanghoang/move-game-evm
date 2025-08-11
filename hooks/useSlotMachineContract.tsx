@@ -30,21 +30,19 @@ export interface SpinResult {
 
 export function useSlotMachineContract() {
     const [spinResult, setSpinResult] = useState<SpinResult | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isSpinning, setIsSpinning] = useState(false);
     const [isClaiming, setIsClaiming] = useState(false);
     const [claimDigest, setClaimDigest] = useState<string | null>(null);
 
-    // 📌 Start a spin (payable)
-    const {
-        writeContract: startSpin,
-        isPending: isSpinning,
-        isSuccess,
-        error: spinError,
-        data: spinData,
-    } = useWriteContract();
+    /** ===================== SPIN LOGIC ===================== **/
+    const { writeContract: startSpin, error: spinError } = useWriteContract({
+        mutation: {
+            onError: () => setIsSpinning(false),
+        },
+    });
 
     const handleStartSpin = (betAmountWei: bigint) => {
-        setIsLoading(true);
+        setIsSpinning(true);
         startSpin({
             ...SLOT_MACHINE_CONTRACT,
             functionName: "spinAndProcess",
@@ -53,12 +51,37 @@ export function useSlotMachineContract() {
         });
     };
 
-    // 📌 Claim all rewards
-    const {
-        writeContract: claimAll,
-        error: claimError,
-        data: claimData,
-    } = useWriteContract();
+    // Listen for PayoutCalculated (end of spin)
+    useWatchContractEvent({
+        ...SLOT_MACHINE_CONTRACT,
+        eventName: "PayoutCalculated",
+        onLogs(logs) {
+            if (!logs?.length) return;
+            const log = logs[logs.length - 1] as any;
+            const result: SpinResult = {
+                player: log.args.player,
+                spinId: log.args.spinId,
+                betAmount: log.args.betAmount,
+                reel1: Number(log.args.reel1),
+                reel2: Number(log.args.reel2),
+                reel3: Number(log.args.reel3),
+                payout: log.args.payout,
+                multiplier: log.args.multiplier,
+                isJackpot: log.args.isJackpot,
+                winType: log.args.winType,
+                timestamp: log.args.timestamp,
+            };
+            setSpinResult(result);
+            setIsSpinning(false);
+        },
+    });
+
+    /** ===================== CLAIM LOGIC ===================== **/
+    const { writeContract: claimAll, error: claimError } = useWriteContract({
+        mutation: {
+            onError: () => setIsClaiming(false),
+        },
+    });
 
     const handleClaimAll = () => {
         setIsClaiming(true);
@@ -69,71 +92,27 @@ export function useSlotMachineContract() {
         });
     };
 
-    // Watch for payout calculated events
-    useWatchContractEvent({
-        ...SLOT_MACHINE_CONTRACT,
-        eventName: "PayoutCalculated",
-        onLogs(logs) {
-            console.log("PayoutCalculated event:", logs);
-            if (logs && logs.length > 0) {
-                const log = logs[logs.length - 1] as any;
-                const result: SpinResult = {
-                    player: log.args.player as string,
-                    spinId: log.args.spinId as bigint,
-                    betAmount: log.args.betAmount as bigint,
-                    reel1: Number(log.args.reel1),
-                    reel2: Number(log.args.reel2),
-                    reel3: Number(log.args.reel3),
-                    payout: log.args.payout as bigint,
-                    multiplier: log.args.multiplier as bigint,
-                    isJackpot: log.args.isJackpot as boolean,
-                    winType: log.args.winType as string,
-                    timestamp: log.args.timestamp as bigint,
-                };
-                console.log("Result", result);
-                setSpinResult(result);
-            }
-        },
-    });
-
-    // Watch for reward claimed events
+    // Listen for RewardClaimed (end of claim)
     useWatchContractEvent({
         ...SLOT_MACHINE_CONTRACT,
         eventName: "RewardClaimed",
         onLogs(logs) {
-            console.log("RewardClaimed event:", logs);
-            if (logs && logs.length > 0) {
-                const log = logs[logs.length - 1] as any;
-                setClaimDigest(log.transactionHash);
-            }
+            if (!logs?.length) return;
+            const log = logs[logs.length - 1] as any;
+            setClaimDigest(log.transactionHash);
+            setIsClaiming(false);
         },
     });
-
-    // Reset loading state when spin completes
-    useEffect(() => {
-        if (isSuccess && !isSpinning) {
-            setIsLoading(false);
-        }
-    }, [isSuccess, isSpinning]);
-
-    // Reset claiming state when claim completes
-    useEffect(() => {
-        if (claimData && !isClaiming) {
-            setIsClaiming(false);
-        }
-    }, [claimData, isClaiming]);
 
     return {
         handleStartSpin,
         isSpinning,
-        isLoading,
-        isSuccess,
+        spinResult,
         spinError,
-        claimError,
         handleClaimAll,
         isClaiming,
-        spinResult,
         claimDigest,
+        claimError,
     };
 }
 

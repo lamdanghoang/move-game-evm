@@ -64,13 +64,11 @@ const SlotMachine = () => {
         handleStartSpin: spinSlot,
         handleClaimAll,
         isSpinning,
-        isLoading,
-        isSuccess,
-        isClaiming,
         spinError,
-        claimError,
+        isClaiming,
         spinResult,
         claimDigest,
+        claimError,
     } = useSlotMachineContract();
 
     const { balance: poolBalance, refetch: refetchJackpot } =
@@ -408,8 +406,10 @@ const SlotMachine = () => {
                                 GAME POOL
                             </div>
                             <div className="text-2xl font-bold text-white tracking-wider font-mono">
-                                {Number(poolBalance)
-                                    ? `${poolBalance} ETH`
+                                {poolBalance
+                                    ? Number(poolBalance)
+                                        ? `${poolBalance} ETH`
+                                        : "0 ETH"
                                     : "LOADING POOL..."}
                             </div>
                         </div>
@@ -469,7 +469,7 @@ const SlotMachine = () => {
                     {/* Win/Lose Message */}
                     {winMessage && (
                         <div
-                            className={`text-center my-4 py-2 rounded-lg font-bold text-lg transition-all duration-500 ${
+                            className={`text-center my-4 py-2 rounded-lg font-bold text-lg transition-all duration-500 overflow-hidden ${
                                 winMessage.includes("won") ||
                                 winMessage.includes("JACKPOT") ||
                                 winMessage.includes("WIN")
@@ -542,15 +542,11 @@ const SlotMachine = () => {
 
                             {/* Button content */}
                             <div className="relative flex items-center justify-center gap-2">
-                                {(isSpinning || isLoading) && (
+                                {isSpinning && (
                                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                                 )}
                                 <span>
-                                    {isLoading
-                                        ? "SIGNING..."
-                                        : isSpinning
-                                        ? "SPINNING..."
-                                        : "SPIN"}
+                                    {isSpinning ? "SPINNING..." : "SPIN"}
                                 </span>
                             </div>
                         </button>

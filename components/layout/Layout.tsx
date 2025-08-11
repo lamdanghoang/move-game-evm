@@ -9,7 +9,7 @@ import {
     SuiClientProvider,
     WalletProvider,
 } from "@mysten/dapp-kit";
-import { WagmiProvider, createConfig, http } from "wagmi";
+import { WagmiProvider } from "wagmi";
 import { somniaTestnet, coreTestnet2 } from "wagmi/chains";
 import {
     getDefaultConfig,
@@ -22,7 +22,7 @@ import { Toaster } from "sonner";
 const config = getDefaultConfig({
     appName: "MoveGaming",
     projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "",
-    chains: [somniaTestnet, coreTestnet2],
+    chains: [coreTestnet2, somniaTestnet],
     ssr: true, // If your dApp uses server side rendering (SSR)
 });
 

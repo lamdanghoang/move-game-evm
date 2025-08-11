@@ -28,8 +28,8 @@ const Header = () => {
         { path: "/games", label: "Games", icon: Gamepad2 },
         { path: "/marketplace", label: "Marketplace", icon: Store },
         { path: "/leaderboard", label: "Leaderboard", icon: Trophy },
-        { path: "/dao", label: "DAO", icon: Users },
-        { path: "/profile", label: "Profile", icon: User },
+        // { path: "/dao", label: "DAO", icon: Users },
+        // { path: "/profile", label: "Profile", icon: User },
     ];
 
     return (
@@ -75,7 +75,7 @@ const Header = () => {
 
                     {/* Connect Wallet Button */}
                     <div className="hidden md:flex items-center space-x-4">
-                        <ConnectButton showBalance={false} chainStatus="none" />
+                        <ConnectButton showBalance={false} chainStatus="icon" />
                     </div>
 
                     {/* Mobile Menu Button */}
@@ -116,7 +116,7 @@ const Header = () => {
                                 );
                             })}
 
-                            <WalletSelectorMobile />
+                            <ConnectButton showBalance={false} />
                         </div>
                     </div>
                 )}
