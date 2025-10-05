@@ -216,7 +216,7 @@ const SlotMachine = () => {
                 // Handle jackpot win
                 if (contractResult.isJackpot) {
                     setWinMessage(
-                        `🎰 JACKPOT! You won ${payoutAmount.toFixed(3)} ETH!`
+                        `🎰 JACKPOT! You won ${payoutAmount.toFixed(5)} ETH!`
                     );
                 } else {
                     // Regular win with win type
@@ -596,7 +596,7 @@ const SlotMachine = () => {
                                 <div className="text-orange-300 text-lg font-mono bg-black/50 rounded px-3 py-1">
                                     {Number(
                                         formatEther(totalPendingRewards)
-                                    ).toFixed(3)}{" "}
+                                    ).toFixed(5)}{" "}
                                     ETH
                                 </div>
                             </div>

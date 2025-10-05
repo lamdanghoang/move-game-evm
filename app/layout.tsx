@@ -26,6 +26,7 @@ export default function RootLayout({
     return (
         <html lang="en">
             <body
+                suppressHydrationWarning={true}
                 className={`${orbitron.variable} ${exo.variable} antialiased`}
             >
                 <Layout>{children}</Layout>
