@@ -7,7 +7,12 @@ export interface ContractConfig {
 }
 
 export const SLOT_MACHINE_CONTRACT: ContractConfig = {
-    address: "0x3f4B9a4973a18b69880600Fd782B6EbeFe8bcFbc",
+    address: "0xB5Fc10cc126A969762f88b9F13ae96C788B079Cf",
+    abi: [],
+};
+
+export const SICBO_CONTRACT: ContractConfig = {
+    address: "0x88533262A4e22836C729086Af072176587516361",
     abi: [
         {
             inputs: [],
@@ -17,6 +22,110 @@ export const SLOT_MACHINE_CONTRACT: ContractConfig = {
         {
             anonymous: false,
             inputs: [
+                {
+                    indexed: true,
+                    internalType: "address",
+                    name: "player",
+                    type: "address",
+                },
+                {
+                    indexed: true,
+                    internalType: "uint256",
+                    name: "betId",
+                    type: "uint256",
+                },
+                {
+                    indexed: false,
+                    internalType: "enum SicBo.BetType",
+                    name: "betType",
+                    type: "uint8",
+                },
+                {
+                    indexed: false,
+                    internalType: "uint256",
+                    name: "amount",
+                    type: "uint256",
+                },
+                {
+                    indexed: false,
+                    internalType: "uint256",
+                    name: "timestamp",
+                    type: "uint256",
+                },
+            ],
+            name: "BetPlaced",
+            type: "event",
+        },
+        {
+            anonymous: false,
+            inputs: [
+                {
+                    indexed: true,
+                    internalType: "address",
+                    name: "player",
+                    type: "address",
+                },
+                {
+                    indexed: true,
+                    internalType: "uint256",
+                    name: "betId",
+                    type: "uint256",
+                },
+                {
+                    indexed: false,
+                    internalType: "uint8",
+                    name: "die1",
+                    type: "uint8",
+                },
+                {
+                    indexed: false,
+                    internalType: "uint8",
+                    name: "die2",
+                    type: "uint8",
+                },
+                {
+                    indexed: false,
+                    internalType: "uint8",
+                    name: "die3",
+                    type: "uint8",
+                },
+                {
+                    indexed: false,
+                    internalType: "uint8",
+                    name: "totalSum",
+                    type: "uint8",
+                },
+                {
+                    indexed: false,
+                    internalType: "bool",
+                    name: "isTriple",
+                    type: "bool",
+                },
+                {
+                    indexed: false,
+                    internalType: "uint256",
+                    name: "payout",
+                    type: "uint256",
+                },
+                {
+                    indexed: false,
+                    internalType: "uint256",
+                    name: "timestamp",
+                    type: "uint256",
+                },
+            ],
+            name: "BetSettled",
+            type: "event",
+        },
+        {
+            anonymous: false,
+            inputs: [
+                {
+                    indexed: true,
+                    internalType: "address",
+                    name: "funder",
+                    type: "address",
+                },
                 {
                     indexed: false,
                     internalType: "uint256",
@@ -38,72 +147,49 @@ export const SLOT_MACHINE_CONTRACT: ContractConfig = {
             inputs: [
                 {
                     indexed: true,
+                    internalType: "uint256",
+                    name: "betId",
+                    type: "uint256",
+                },
+                {
+                    indexed: false,
+                    internalType: "uint8",
+                    name: "die1",
+                    type: "uint8",
+                },
+                {
+                    indexed: false,
+                    internalType: "uint8",
+                    name: "die2",
+                    type: "uint8",
+                },
+                {
+                    indexed: false,
+                    internalType: "uint8",
+                    name: "die3",
+                    type: "uint8",
+                },
+            ],
+            name: "DiceRolled",
+            type: "event",
+        },
+        {
+            anonymous: false,
+            inputs: [
+                {
+                    indexed: true,
                     internalType: "address",
-                    name: "player",
+                    name: "owner",
                     type: "address",
                 },
                 {
                     indexed: false,
                     internalType: "uint256",
-                    name: "spinId",
-                    type: "uint256",
-                },
-                {
-                    indexed: false,
-                    internalType: "uint256",
-                    name: "betAmount",
-                    type: "uint256",
-                },
-                {
-                    indexed: false,
-                    internalType: "uint8",
-                    name: "reel1",
-                    type: "uint8",
-                },
-                {
-                    indexed: false,
-                    internalType: "uint8",
-                    name: "reel2",
-                    type: "uint8",
-                },
-                {
-                    indexed: false,
-                    internalType: "uint8",
-                    name: "reel3",
-                    type: "uint8",
-                },
-                {
-                    indexed: false,
-                    internalType: "uint256",
-                    name: "payout",
-                    type: "uint256",
-                },
-                {
-                    indexed: false,
-                    internalType: "uint256",
-                    name: "multiplier",
-                    type: "uint256",
-                },
-                {
-                    indexed: false,
-                    internalType: "bool",
-                    name: "isJackpot",
-                    type: "bool",
-                },
-                {
-                    indexed: false,
-                    internalType: "string",
-                    name: "winType",
-                    type: "string",
-                },
-                {
-                    indexed: false,
-                    internalType: "uint256",
-                    name: "timestamp",
+                    name: "amount",
                     type: "uint256",
                 },
             ],
-            name: "PayoutCalculated",
+            name: "FundsWithdrawn",
             type: "event",
         },
         {
@@ -118,7 +204,7 @@ export const SLOT_MACHINE_CONTRACT: ContractConfig = {
                 {
                     indexed: false,
                     internalType: "uint256",
-                    name: "spinId",
+                    name: "betId",
                     type: "uint256",
                 },
                 {
@@ -138,261 +224,6 @@ export const SLOT_MACHINE_CONTRACT: ContractConfig = {
             type: "event",
         },
         {
-            anonymous: false,
-            inputs: [
-                {
-                    indexed: true,
-                    internalType: "address",
-                    name: "player",
-                    type: "address",
-                },
-                {
-                    indexed: false,
-                    internalType: "uint256",
-                    name: "spinId",
-                    type: "uint256",
-                },
-                {
-                    indexed: false,
-                    internalType: "uint8",
-                    name: "reel1",
-                    type: "uint8",
-                },
-                {
-                    indexed: false,
-                    internalType: "uint8",
-                    name: "reel2",
-                    type: "uint8",
-                },
-                {
-                    indexed: false,
-                    internalType: "uint8",
-                    name: "reel3",
-                    type: "uint8",
-                },
-                {
-                    indexed: false,
-                    internalType: "uint256",
-                    name: "timestamp",
-                    type: "uint256",
-                },
-            ],
-            name: "SpinResult",
-            type: "event",
-        },
-        {
-            anonymous: false,
-            inputs: [
-                {
-                    indexed: true,
-                    internalType: "address",
-                    name: "player",
-                    type: "address",
-                },
-                {
-                    indexed: false,
-                    internalType: "uint256",
-                    name: "spinId",
-                    type: "uint256",
-                },
-                {
-                    indexed: false,
-                    internalType: "uint256",
-                    name: "betAmount",
-                    type: "uint256",
-                },
-                {
-                    indexed: false,
-                    internalType: "uint256",
-                    name: "timestamp",
-                    type: "uint256",
-                },
-            ],
-            name: "SpinStarted",
-            type: "event",
-        },
-        {
-            inputs: [],
-            name: "MAX_BET",
-            outputs: [
-                {
-                    internalType: "uint256",
-                    name: "",
-                    type: "uint256",
-                },
-            ],
-            stateMutability: "view",
-            type: "function",
-        },
-        {
-            inputs: [],
-            name: "MIN_BET",
-            outputs: [
-                {
-                    internalType: "uint256",
-                    name: "",
-                    type: "uint256",
-                },
-            ],
-            stateMutability: "view",
-            type: "function",
-        },
-        {
-            inputs: [],
-            name: "REWARD_EXPIRY_TIME",
-            outputs: [
-                {
-                    internalType: "uint256",
-                    name: "",
-                    type: "uint256",
-                },
-            ],
-            stateMutability: "view",
-            type: "function",
-        },
-        {
-            inputs: [
-                {
-                    internalType: "uint256",
-                    name: "",
-                    type: "uint256",
-                },
-            ],
-            name: "activeSpins",
-            outputs: [
-                {
-                    internalType: "address",
-                    name: "player",
-                    type: "address",
-                },
-                {
-                    internalType: "uint256",
-                    name: "betAmount",
-                    type: "uint256",
-                },
-                {
-                    internalType: "uint256",
-                    name: "timestamp",
-                    type: "uint256",
-                },
-                {
-                    internalType: "uint8",
-                    name: "reel1",
-                    type: "uint8",
-                },
-                {
-                    internalType: "uint8",
-                    name: "reel2",
-                    type: "uint8",
-                },
-                {
-                    internalType: "uint8",
-                    name: "reel3",
-                    type: "uint8",
-                },
-                {
-                    internalType: "bool",
-                    name: "isProcessed",
-                    type: "bool",
-                },
-            ],
-            stateMutability: "view",
-            type: "function",
-        },
-        {
-            inputs: [
-                {
-                    internalType: "uint8",
-                    name: "r1",
-                    type: "uint8",
-                },
-                {
-                    internalType: "uint8",
-                    name: "r2",
-                    type: "uint8",
-                },
-                {
-                    internalType: "uint8",
-                    name: "r3",
-                    type: "uint8",
-                },
-                {
-                    internalType: "uint256",
-                    name: "bet",
-                    type: "uint256",
-                },
-            ],
-            name: "calculateDetailedPayout",
-            outputs: [
-                {
-                    internalType: "uint256",
-                    name: "payout",
-                    type: "uint256",
-                },
-                {
-                    internalType: "uint256",
-                    name: "multiplier",
-                    type: "uint256",
-                },
-                {
-                    internalType: "bool",
-                    name: "jackpot",
-                    type: "bool",
-                },
-                {
-                    internalType: "string",
-                    name: "winType",
-                    type: "string",
-                },
-            ],
-            stateMutability: "pure",
-            type: "function",
-        },
-        {
-            inputs: [
-                {
-                    internalType: "uint8",
-                    name: "r1",
-                    type: "uint8",
-                },
-                {
-                    internalType: "uint8",
-                    name: "r2",
-                    type: "uint8",
-                },
-                {
-                    internalType: "uint8",
-                    name: "r3",
-                    type: "uint8",
-                },
-                {
-                    internalType: "uint256",
-                    name: "bet",
-                    type: "uint256",
-                },
-            ],
-            name: "calculatePayout",
-            outputs: [
-                {
-                    internalType: "uint256",
-                    name: "payout",
-                    type: "uint256",
-                },
-                {
-                    internalType: "uint256",
-                    name: "multiplier",
-                    type: "uint256",
-                },
-                {
-                    internalType: "bool",
-                    name: "jackpot",
-                    type: "bool",
-                },
-            ],
-            stateMutability: "pure",
-            type: "function",
-        },
-        {
             inputs: [],
             name: "claimAllRewards",
             outputs: [],
@@ -403,52 +234,11 @@ export const SLOT_MACHINE_CONTRACT: ContractConfig = {
             inputs: [
                 {
                     internalType: "uint256",
-                    name: "spinId",
+                    name: "rewardIndex",
                     type: "uint256",
                 },
             ],
             name: "claimReward",
-            outputs: [],
-            stateMutability: "nonpayable",
-            type: "function",
-        },
-        {
-            inputs: [
-                {
-                    internalType: "uint8",
-                    name: "r1",
-                    type: "uint8",
-                },
-                {
-                    internalType: "uint8",
-                    name: "r2",
-                    type: "uint8",
-                },
-                {
-                    internalType: "uint8",
-                    name: "r3",
-                    type: "uint8",
-                },
-                {
-                    internalType: "uint8",
-                    name: "target",
-                    type: "uint8",
-                },
-            ],
-            name: "containsSymbol",
-            outputs: [
-                {
-                    internalType: "bool",
-                    name: "",
-                    type: "bool",
-                },
-            ],
-            stateMutability: "pure",
-            type: "function",
-        },
-        {
-            inputs: [],
-            name: "emergencyShutdown",
             outputs: [],
             stateMutability: "nonpayable",
             type: "function",
@@ -462,7 +252,7 @@ export const SLOT_MACHINE_CONTRACT: ContractConfig = {
         },
         {
             inputs: [],
-            name: "getBetLimits",
+            name: "getGameConfig",
             outputs: [
                 {
                     internalType: "uint256",
@@ -472,61 +262,15 @@ export const SLOT_MACHINE_CONTRACT: ContractConfig = {
                 {
                     internalType: "uint256",
                     name: "",
-                    type: "uint256",
-                },
-            ],
-            stateMutability: "pure",
-            type: "function",
-        },
-        {
-            inputs: [],
-            name: "getCasinoStats",
-            outputs: [
-                {
-                    internalType: "uint256",
-                    name: "balance",
-                    type: "uint256",
-                },
-                {
-                    internalType: "uint256",
-                    name: "spins",
-                    type: "uint256",
-                },
-                {
-                    internalType: "uint256",
-                    name: "wagered",
-                    type: "uint256",
-                },
-                {
-                    internalType: "uint256",
-                    name: "payouts",
-                    type: "uint256",
-                },
-                {
-                    internalType: "uint256",
-                    name: "jackpots",
                     type: "uint256",
                 },
                 {
                     internalType: "bool",
-                    name: "active",
+                    name: "",
                     type: "bool",
                 },
             ],
             stateMutability: "view",
-            type: "function",
-        },
-        {
-            inputs: [],
-            name: "getPayoutTable",
-            outputs: [
-                {
-                    internalType: "uint256[]",
-                    name: "",
-                    type: "uint256[]",
-                },
-            ],
-            stateMutability: "pure",
             type: "function",
         },
         {
@@ -548,7 +292,7 @@ export const SLOT_MACHINE_CONTRACT: ContractConfig = {
                         },
                         {
                             internalType: "uint256",
-                            name: "spinId",
+                            name: "betId",
                             type: "uint256",
                         },
                         {
@@ -558,84 +302,36 @@ export const SLOT_MACHINE_CONTRACT: ContractConfig = {
                         },
                         {
                             internalType: "uint8",
-                            name: "reel1",
+                            name: "die1",
                             type: "uint8",
                         },
                         {
                             internalType: "uint8",
-                            name: "reel2",
+                            name: "die2",
                             type: "uint8",
                         },
                         {
                             internalType: "uint8",
-                            name: "reel3",
+                            name: "die3",
                             type: "uint8",
                         },
                         {
-                            internalType: "uint256",
-                            name: "multiplier",
-                            type: "uint256",
+                            internalType: "uint8",
+                            name: "totalSum",
+                            type: "uint8",
                         },
                         {
-                            internalType: "bool",
-                            name: "isJackpot",
-                            type: "bool",
+                            internalType: "enum SicBo.BetType",
+                            name: "betType",
+                            type: "uint8",
                         },
                     ],
-                    internalType: "struct SlotGame.PendingReward[]",
+                    internalType: "struct SicBo.PendingReward[]",
                     name: "",
                     type: "tuple[]",
                 },
             ],
             stateMutability: "view",
-            type: "function",
-        },
-        {
-            inputs: [
-                {
-                    internalType: "uint8",
-                    name: "r1",
-                    type: "uint8",
-                },
-                {
-                    internalType: "uint8",
-                    name: "r2",
-                    type: "uint8",
-                },
-                {
-                    internalType: "uint8",
-                    name: "r3",
-                    type: "uint8",
-                },
-            ],
-            name: "getSpecialMultiplier",
-            outputs: [
-                {
-                    internalType: "uint256",
-                    name: "",
-                    type: "uint256",
-                },
-            ],
-            stateMutability: "pure",
-            type: "function",
-        },
-        {
-            inputs: [
-                {
-                    internalType: "uint8",
-                    name: "symbol",
-                    type: "uint8",
-                },
-            ],
-            name: "getSymbolName",
-            outputs: [
-                {
-                    internalType: "string",
-                    name: "",
-                    type: "string",
-                },
-            ],
-            stateMutability: "pure",
             type: "function",
         },
         {
@@ -658,27 +354,8 @@ export const SLOT_MACHINE_CONTRACT: ContractConfig = {
             type: "function",
         },
         {
-            inputs: [
-                {
-                    internalType: "uint8",
-                    name: "symbol",
-                    type: "uint8",
-                },
-            ],
-            name: "getTripleMultiplier",
-            outputs: [
-                {
-                    internalType: "uint256",
-                    name: "",
-                    type: "uint256",
-                },
-            ],
-            stateMutability: "pure",
-            type: "function",
-        },
-        {
             inputs: [],
-            name: "isActive",
+            name: "isGameActive",
             outputs: [
                 {
                     internalType: "bool",
@@ -690,66 +367,8 @@ export const SLOT_MACHINE_CONTRACT: ContractConfig = {
             type: "function",
         },
         {
-            inputs: [
-                {
-                    internalType: "uint8",
-                    name: "r1",
-                    type: "uint8",
-                },
-                {
-                    internalType: "uint8",
-                    name: "r2",
-                    type: "uint8",
-                },
-                {
-                    internalType: "uint8",
-                    name: "r3",
-                    type: "uint8",
-                },
-            ],
-            name: "isJackpotWin",
-            outputs: [
-                {
-                    internalType: "bool",
-                    name: "",
-                    type: "bool",
-                },
-            ],
-            stateMutability: "pure",
-            type: "function",
-        },
-        {
-            inputs: [
-                {
-                    internalType: "uint8",
-                    name: "r1",
-                    type: "uint8",
-                },
-                {
-                    internalType: "uint8",
-                    name: "r2",
-                    type: "uint8",
-                },
-                {
-                    internalType: "uint8",
-                    name: "r3",
-                    type: "uint8",
-                },
-            ],
-            name: "isTripleMatch",
-            outputs: [
-                {
-                    internalType: "bool",
-                    name: "",
-                    type: "bool",
-                },
-            ],
-            stateMutability: "pure",
-            type: "function",
-        },
-        {
             inputs: [],
-            name: "jackpotHits",
+            name: "maxBet",
             outputs: [
                 {
                     internalType: "uint256",
@@ -762,7 +381,7 @@ export const SLOT_MACHINE_CONTRACT: ContractConfig = {
         },
         {
             inputs: [],
-            name: "nextSpinId",
+            name: "minBet",
             outputs: [
                 {
                     internalType: "uint256",
@@ -808,7 +427,7 @@ export const SLOT_MACHINE_CONTRACT: ContractConfig = {
                 },
                 {
                     internalType: "uint256",
-                    name: "spinId",
+                    name: "betId",
                     type: "uint256",
                 },
                 {
@@ -818,28 +437,28 @@ export const SLOT_MACHINE_CONTRACT: ContractConfig = {
                 },
                 {
                     internalType: "uint8",
-                    name: "reel1",
+                    name: "die1",
                     type: "uint8",
                 },
                 {
                     internalType: "uint8",
-                    name: "reel2",
+                    name: "die2",
                     type: "uint8",
                 },
                 {
                     internalType: "uint8",
-                    name: "reel3",
+                    name: "die3",
                     type: "uint8",
                 },
                 {
-                    internalType: "uint256",
-                    name: "multiplier",
-                    type: "uint256",
+                    internalType: "uint8",
+                    name: "totalSum",
+                    type: "uint8",
                 },
                 {
-                    internalType: "bool",
-                    name: "isJackpot",
-                    type: "bool",
+                    internalType: "enum SicBo.BetType",
+                    name: "betType",
+                    type: "uint8",
                 },
             ],
             stateMutability: "view",
@@ -848,35 +467,52 @@ export const SLOT_MACHINE_CONTRACT: ContractConfig = {
         {
             inputs: [
                 {
+                    internalType: "enum SicBo.BetType",
+                    name: "betType",
+                    type: "uint8",
+                },
+            ],
+            name: "placeBetAndRoll",
+            outputs: [],
+            stateMutability: "payable",
+            type: "function",
+        },
+        {
+            inputs: [
+                {
                     internalType: "uint256",
-                    name: "spinId",
+                    name: "_minBet",
+                    type: "uint256",
+                },
+                {
+                    internalType: "uint256",
+                    name: "_maxBet",
                     type: "uint256",
                 },
             ],
-            name: "processSpinResult",
+            name: "setBetLimits",
             outputs: [],
             stateMutability: "nonpayable",
             type: "function",
         },
         {
             inputs: [],
-            name: "spinAndProcess",
-            outputs: [],
-            stateMutability: "payable",
-            type: "function",
-        },
-        {
-            inputs: [],
-            name: "startSpin",
-            outputs: [],
-            stateMutability: "payable",
-            type: "function",
-        },
-        {
-            inputs: [],
-            name: "toggleCasinoStatus",
+            name: "toggleGameActive",
             outputs: [],
             stateMutability: "nonpayable",
+            type: "function",
+        },
+        {
+            inputs: [],
+            name: "totalBets",
+            outputs: [
+                {
+                    internalType: "uint256",
+                    name: "",
+                    type: "uint256",
+                },
+            ],
+            stateMutability: "view",
             type: "function",
         },
         {
@@ -893,45 +529,6 @@ export const SLOT_MACHINE_CONTRACT: ContractConfig = {
             type: "function",
         },
         {
-            inputs: [],
-            name: "totalSpins",
-            outputs: [
-                {
-                    internalType: "uint256",
-                    name: "",
-                    type: "uint256",
-                },
-            ],
-            stateMutability: "view",
-            type: "function",
-        },
-        {
-            inputs: [],
-            name: "totalWagered",
-            outputs: [
-                {
-                    internalType: "uint256",
-                    name: "",
-                    type: "uint256",
-                },
-            ],
-            stateMutability: "view",
-            type: "function",
-        },
-        {
-            inputs: [
-                {
-                    internalType: "address",
-                    name: "newOwner",
-                    type: "address",
-                },
-            ],
-            name: "transferCasinoOwnership",
-            outputs: [],
-            stateMutability: "nonpayable",
-            type: "function",
-        },
-        {
             inputs: [
                 {
                     internalType: "uint256",
@@ -939,7 +536,7 @@ export const SLOT_MACHINE_CONTRACT: ContractConfig = {
                     type: "uint256",
                 },
             ],
-            name: "withdrawCasinoFunds",
+            name: "withdrawFunds",
             outputs: [],
             stateMutability: "nonpayable",
             type: "function",

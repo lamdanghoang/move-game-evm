@@ -27,7 +27,7 @@ const Marketplace = () => {
             name: "Legendary Cyber Sword",
             description: "Rare weapon with +50 damage boost",
             image: "photo-1526374965328-7f61d4dc18c5",
-            price: "125 SUI",
+            price: "1.25 ETH",
             rarity: "Legendary",
             category: "Weapons",
             seller: "CyberWarrior",
@@ -38,7 +38,7 @@ const Marketplace = () => {
             name: "Quantum Racing Ship",
             description: "Ultra-fast spaceship with advanced engines",
             image: "photo-1470071459604-3b5ec3a7fe05",
-            price: "89 SUI",
+            price: "0.89 ETH",
             rarity: "Epic",
             category: "Vehicles",
             seller: "SpeedDemon",
@@ -49,7 +49,7 @@ const Marketplace = () => {
             name: "Mystic Dragon Companion",
             description: "Loyal dragon companion with fire breath",
             image: "photo-1500673922987-e212871fec22",
-            price: "200 SUI",
+            price: "2.00 ETH",
             rarity: "Mythic",
             category: "Characters",
             seller: "DragonMaster",
@@ -60,7 +60,7 @@ const Marketplace = () => {
             name: "Cyber City Plot",
             description: "Prime real estate in the metaverse",
             image: "photo-1487058792275-0ad4aaf24ca7",
-            price: "450 SUI",
+            price: "0.50 ETH",
             rarity: "Rare",
             category: "Land",
             seller: "MetaBuilder",
@@ -71,7 +71,7 @@ const Marketplace = () => {
             name: "Mech Battle Armor",
             description: "Advanced armor with energy shields",
             image: "photo-1531297484001-80022131f5a1",
-            price: "156 SUI",
+            price: "1.56 ETH",
             rarity: "Epic",
             category: "Weapons",
             seller: "MechPilot",
@@ -82,7 +82,7 @@ const Marketplace = () => {
             name: "Golden Achievement Badge",
             description: "Exclusive tournament winner badge",
             image: "photo-1488590528505-98d2b5aba04b",
-            price: "75 SUI",
+            price: "0.75 ETH",
             rarity: "Rare",
             category: "Collectibles",
             seller: "Champion",
@@ -152,7 +152,7 @@ const Marketplace = () => {
                     <Card className="bg-card/50 border-border/50 text-center">
                         <CardContent className="p-4">
                             <div className="text-2xl font-bold text-neon-purple">
-                                15.7K SUI
+                                15.7K ETH
                             </div>
                             <div className="text-sm text-muted-foreground">
                                 Volume 24h

@@ -92,6 +92,23 @@ export function useSlotMachineContract() {
         });
     };
 
+    const { writeContract: claimReward, error: claimRewardError } =
+        useWriteContract({
+            mutation: {
+                onSuccess: () => setIsClaiming(false),
+                onError: () => setIsClaiming(false),
+            },
+        });
+
+    const handleClaimReward = (rewardIndex: bigint) => {
+        setIsClaiming(true);
+        claimReward({
+            ...SLOT_MACHINE_CONTRACT,
+            functionName: "claimReward",
+            args: [rewardIndex],
+        });
+    };
+
     // Listen for RewardClaimed (end of claim)
     useWatchContractEvent({
         ...SLOT_MACHINE_CONTRACT,
@@ -110,9 +127,10 @@ export function useSlotMachineContract() {
         spinResult,
         spinError,
         handleClaimAll,
+        handleClaimReward,
         isClaiming,
         claimDigest,
-        claimError,
+        claimRewardError,
     };
 }
 

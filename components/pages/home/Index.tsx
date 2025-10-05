@@ -14,7 +14,18 @@ const Index = () => {
                 "Triple Seven is a classic slot machine game where players spin three reels in hopes of landing lucky combinations of sevens, fruits, and other symbols to win big rewards",
             image: "https://png.pngtree.com/png-clipart/20250109/original/pngtree-classic-slot-machine-game-for-casino-lovers-png-image_19329677.png",
             rating: 5.0,
-            players: 10,
+            players: 1,
+            category: "Gambling",
+            featured: true,
+        },
+        {
+            id: "1",
+            title: "Big and Small",
+            description:
+                "Big and Small is a thrilling Chinese gambling game called Sic Bo that involves predicting the total sum or specific combinations of three dice",
+            image: "https://png.pngtree.com/png-clipart/20250109/original/pngtree-classic-slot-machine-game-for-casino-lovers-png-image_19329677.png",
+            rating: 5.0,
+            players: 1,
             category: "Gambling",
             featured: true,
         },
@@ -38,7 +49,7 @@ const Index = () => {
         {
             title: "New Tournament Season Begins!",
             description:
-                "Join the ultimate gaming championship with 100K SUI in prizes",
+                "Join the ultimate gaming championship with 1.00 ETH in prizes",
             date: "2024-06-10",
             badge: "Tournament",
         },

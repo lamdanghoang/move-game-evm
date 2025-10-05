@@ -25,7 +25,7 @@ const DAO = () => {
             id: "1",
             title: "Increase Tournament Prize Pool by 50%",
             description:
-                "Proposal to increase the monthly tournament prize pool from 10,000 SUI to 15,000 SUI to attract more competitive players and increase platform engagement.",
+                "Proposal to increase the monthly tournament prize pool from 0.2 ETH to 1.0 ETH to attract more competitive players and increase platform engagement.",
             author: "TournamentMaster",
             status: "active",
             category: "Treasury",
@@ -89,7 +89,7 @@ const DAO = () => {
             id: "5",
             title: "Implement Cross-Chain Gaming Support",
             description:
-                "Add support for cross-chain gaming assets, allowing players to use NFTs from Ethereum and Polygon in Sui-based games.",
+                "Add support for cross-chain gaming assets, allowing players to use NFTs from Ethereum and Polygon in games.",
             author: "CrossChainDev",
             status: "draft",
             category: "Technical",

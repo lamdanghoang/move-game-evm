@@ -30,7 +30,7 @@ const Profile = () => {
         nextLevelExp: 30000,
         totalGamesPlayed: 156,
         winRate: 73,
-        totalEarnings: "1,247 SUI",
+        totalEarnings: "1.005 ETH",
         rank: 8,
         badges: [
             "Champion",
@@ -74,28 +74,28 @@ const Profile = () => {
             name: "Legendary Cyber Sword",
             image: "photo-1526374965328-7f61d4dc18c5",
             rarity: "Legendary",
-            value: "125 SUI",
+            value: "1.25 ETH",
         },
         {
             id: "2",
             name: "Quantum Racing Ship",
             image: "photo-1470071459604-3b5ec3a7fe05",
             rarity: "Epic",
-            value: "89 SUI",
+            value: "0.89 ETH",
         },
         {
             id: "3",
             name: "Mystic Dragon Companion",
             image: "photo-1500673922987-e212871fec22",
             rarity: "Mythic",
-            value: "200 SUI",
+            value: "2.00 ETH",
         },
         {
             id: "4",
             name: "Cyber City Plot",
             image: "photo-1487058792275-0ad4aaf24ca7",
             rarity: "Rare",
-            value: "450 SUI",
+            value: "0.50 ETH",
         },
     ];
 

@@ -12,16 +12,15 @@ import { toast } from "sonner";
 import { parseEther, formatEther } from "viem";
 
 const SYMBOLS: string[] = [
-    "🍒",
-    "🍋",
-    "🍊",
-    "🍇",
-    "🍉",
-    "💎",
-    "7️⃣",
-    "🔔",
-    "🍀",
-    "👑",
+    "🍒", // 0: CHERRY
+    "🍋", // 1: LEMON
+    "🍊", // 2: ORANGE
+    "🍀", // 3: LEAF
+    "🍇", // 4: GRAPE
+    "🔔", // 5: BELL
+    "👑", // 6: CROWN
+    "💎", // 7: DIAMOND
+    "7️⃣", // 8: SEVEN
 ];
 
 const REEL_COUNT = 3;
@@ -68,7 +67,6 @@ const SlotMachine = () => {
         isClaiming,
         spinResult,
         claimDigest,
-        claimError,
     } = useSlotMachineContract();
 
     const { balance: poolBalance, refetch: refetchJackpot } =
@@ -218,7 +216,7 @@ const SlotMachine = () => {
                 // Handle jackpot win
                 if (contractResult.isJackpot) {
                     setWinMessage(
-                        `🎰 JACKPOT! You won ${payoutAmount.toFixed(3)} SUI!`
+                        `🎰 JACKPOT! You won ${payoutAmount.toFixed(3)} ETH!`
                     );
                 } else {
                     // Regular win with win type
@@ -279,12 +277,6 @@ const SlotMachine = () => {
         }
     }, [spinError]);
 
-    useEffect(() => {
-        if (claimError) {
-            toast.error("Failed to claim reward");
-        }
-    }, [claimError]);
-
     const refetchAll = () => {
         refetchBalance();
         refetchPending();
@@ -308,10 +300,13 @@ const SlotMachine = () => {
                     </h3>
 
                     <div className="space-y-2 text-sm">
+                        <div className="text-center font-bold text-base text-yellow-300">
+                            TRIPLE MATCH
+                        </div>
                         <div className="flex justify-between items-center p-2 bg-gradient-to-r from-red-900/40 to-yellow-900/40 rounded border border-red-500/30">
                             <span className="text-white">7️⃣7️⃣7️⃣</span>
                             <span className="text-yellow-300 font-bold">
-                                JACKPOT! - 1000x
+                                1000x
                             </span>
                         </div>
                         <div className="flex justify-between items-center p-2 bg-gradient-to-r from-purple-900/30 to-blue-900/30 rounded border border-purple-500/30">
@@ -326,64 +321,69 @@ const SlotMachine = () => {
                                 200x
                             </span>
                         </div>
-                        <div className="flex justify-between items-center p-2 bg-gradient-to-r from-indigo-900/30 to-purple-900/30 rounded border border-indigo-500/30">
-                            <span className="text-white">🍀🍀🍀</span>
-                            <span className="text-cyan-300 font-semibold">
-                                100x
-                            </span>
-                        </div>
                         <div className="flex justify-between items-center p-2 bg-gradient-to-r from-blue-900/30 to-indigo-900/30 rounded border border-blue-500/30">
                             <span className="text-white">🔔🔔🔔</span>
                             <span className="text-cyan-300 font-semibold">
-                                50x
-                            </span>
-                        </div>
-                        <div className="flex justify-between items-center p-2 bg-gradient-to-r from-indigo-900/30 to-purple-900/30 rounded border border-indigo-500/30">
-                            <span className="text-white">🍉🍉🍉</span>
-                            <span className="text-cyan-300 font-semibold">
-                                25x
+                                100x
                             </span>
                         </div>
                         <div className="flex justify-between items-center p-2 bg-gradient-to-r from-indigo-900/30 to-purple-900/30 rounded border border-indigo-500/30">
                             <span className="text-white">🍇🍇🍇</span>
                             <span className="text-cyan-300 font-semibold">
-                                15x
+                                50x
                             </span>
                         </div>
-                        <div className="flex justify-between items-center p-2 bg-gradient-to-r from-indigo-900/30 to-purple-900/30 rounded border border-indigo-500/30">
+                        <div className="flex justify-between items-center p-2 bg-gradient-to-r from-green-900/40 to-lime-900/40 rounded border border-green-500/30">
+                            <span className="text-white">🍀🍀🍀</span>
+                            <span className="text-cyan-300 font-semibold">
+                                25x
+                            </span>
+                        </div>
+                        <div className="flex justify-between items-center p-2 bg-gradient-to-r from-orange-800/30 to-amber-800/30 rounded border border-orange-500/30">
                             <span className="text-white">🍊🍊🍊</span>
                             <span className="text-cyan-300 font-semibold">
                                 10x
                             </span>
                         </div>
-                        <div className="flex justify-between items-center p-2 bg-gradient-to-r from-indigo-900/30 to-purple-900/30 rounded border border-indigo-500/30">
+                        <div className="flex justify-between items-center p-2 bg-gradient-to-r from-yellow-800/30 to-yellow-900/30 rounded border border-yellow-500/30">
                             <span className="text-white">🍋🍋🍋</span>
                             <span className="text-cyan-300 font-semibold">
                                 5x
                             </span>
                         </div>
-                        <div className="flex justify-between items-center p-2 bg-gradient-to-r from-indigo-900/30 to-purple-900/30 rounded border border-indigo-500/30">
+                        <div className="flex justify-between items-center p-2 bg-gradient-to-r from-red-800/30 to-rose-800/30 rounded border border-red-500/30">
                             <span className="text-white">🍒🍒🍒</span>
                             <span className="text-cyan-300 font-semibold">
-                                3x
+                                2x
                             </span>
                         </div>
 
                         <div className="border-t border-cyan-600/50 pt-3 mt-3">
-                            {/* <div className="flex justify-between items-center p-1.5 bg-gray-800/50 rounded border border-gray-600/30 mb-1">
+                            <div className="text-center font-bold text-base text-yellow-300">
+                                DOUBLE MATCH
+                            </div>
+                            <div className="flex justify-between items-center p-1.5 bg-gray-800/50 rounded border border-gray-600/30 mt-2">
                                 <span className="text-gray-300 text-xs">
                                     Any 7️⃣7️⃣
                                 </span>
                                 <span className="text-cyan-300 text-xs font-semibold">
-                                    2x
+                                    1.0x
                                 </span>
-                            </div> */}
-                            <div className="flex justify-between items-center p-1.5 bg-gray-800/50 rounded border border-gray-600/30">
+                            </div>
+                            <div className="flex justify-between items-center p-1.5 bg-gray-800/50 rounded border border-gray-600/30 mt-1">
                                 <span className="text-gray-300 text-xs">
-                                    Any 🍒
+                                    Any 💎💎
                                 </span>
                                 <span className="text-cyan-300 text-xs font-semibold">
-                                    1x
+                                    0.5x
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-center p-1.5 bg-gray-800/50 rounded border border-gray-600/30 mt-1">
+                                <span className="text-gray-300 text-xs">
+                                    Any 👑👑
+                                </span>
+                                <span className="text-cyan-300 text-xs font-semibold">
+                                    0.4x
                                 </span>
                             </div>
                         </div>
