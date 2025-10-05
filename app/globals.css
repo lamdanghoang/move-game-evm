@@ -319,3 +319,21 @@
 ::-webkit-scrollbar-thumb:hover {
     @apply opacity-80;
 }
+
+@keyframes twinkle {
+    0% {
+        box-shadow: 0 0 2px #fff, 0 0 4px #fff, 0 0 6px #fff, 0 0 8px #ff00ff, 0 0 14px #ff00ff, 0 0 16px #ff00ff, 0 0 20px #ff00ff, 0 0 30px #ff00ff;
+    }
+
+    50% {
+        box-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fff, 0 0 20px #ff00ff, 0 0 35px #ff00ff, 0 0 40px #ff00ff, 0 0 50px #ff00ff, 0 0 75px #ff00ff;
+    }
+
+    100% {
+        box-shadow: 0 0 2px #fff, 0 0 4px #fff, 0 0 6px #fff, 0 0 8px #ff00ff, 0 0 14px #ff00ff, 0 0 16px #ff00ff, 0 0 20px #ff00ff, 0 0 30px #ff00ff;
+    }
+}
+
+.animate-twinkle {
+    animation: twinkle 1.5s ease-in-out infinite;
+}
