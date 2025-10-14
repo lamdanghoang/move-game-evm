@@ -7,6 +7,7 @@ interface GameBoardProps {
     onEndTurn: () => void;
     onBuyProperty: () => void;
     lastRoll: [number, number];
+    hasRolled: boolean;
 }
 
 const GameBoard: React.FC<GameBoardProps> = ({
@@ -15,6 +16,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
     onEndTurn,
     onBuyProperty,
     lastRoll,
+    hasRolled,
 }) => {
     const squares = [
         { name: "GO", type: "go" },
@@ -119,6 +121,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
                 onEndTurn={onEndTurn}
                 onBuyProperty={onBuyProperty}
                 lastRoll={gameState.lastRoll}
+                hasRolled={hasRolled}
             />
         </div>
     );

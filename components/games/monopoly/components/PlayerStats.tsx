@@ -3,9 +3,10 @@ import { Player } from "@/types";
 
 interface PlayerStatsProps {
     player: Player;
+    onTrade: () => void;
 }
 
-const PlayerStats: React.FC<PlayerStatsProps> = ({ player }) => {
+const PlayerStats: React.FC<PlayerStatsProps> = ({ player, onTrade }) => {
     return (
         <div className="bg-neutral-800 border border-zinc-500/20 rounded-2xl p-4 flex flex-col gap-3">
             <h3 className="text-base text-cyan-500 text-shadow-[0_0_10px_rgba(50,184,198,0.5)] font-semibold">
@@ -43,6 +44,7 @@ const PlayerStats: React.FC<PlayerStatsProps> = ({ player }) => {
                     {player.position}
                 </span>
             </div>
+            <button onClick={onTrade} className="text-xs bg-cyan-500 text-white px-2 py-1 rounded mt-2">Trade</button>
         </div>
     );
 };

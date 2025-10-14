@@ -31,7 +31,7 @@ const Modals: React.FC<ModalsProps> = ({ property, card, onClose }) => {
                                 Rent Structure:
                             </h4>
                             <div className="flex flex-col gap-4">
-                                {property.rent.map((rent, index) => (
+                                {property.rent && property.rent.map((rent, index) => (
                                     <div
                                         key={index}
                                         className="flex items-center justify-between text-xs/normal"

@@ -7,6 +7,7 @@ interface ControlsProps {
     onEndTurn: () => void;
     onBuyProperty: () => void;
     lastRoll: [number, number];
+    hasRolled: boolean;
 }
 
 const Controls: React.FC<ControlsProps> = ({
@@ -14,6 +15,7 @@ const Controls: React.FC<ControlsProps> = ({
     onEndTurn,
     onBuyProperty,
     lastRoll,
+    hasRolled,
 }) => {
     const dice1Ref = useRef<DiceRef>(null);
     const dice2Ref = useRef<DiceRef>(null);
@@ -45,7 +47,7 @@ const Controls: React.FC<ControlsProps> = ({
                     <Dice ref={dice1Ref} size="xs" />
                     <Dice ref={dice2Ref} size="xs" />
                 </div>
-                <Button className={`btn rollDiceBtn`} onClick={onRollDice}>
+                <Button className={`btn rollDiceBtn`} onClick={onRollDice} disabled={hasRolled}>
                     Roll Dice
                 </Button>
                 <div className="text-xs/normal">

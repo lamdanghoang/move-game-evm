@@ -1,8 +1,58 @@
 import { useState, useEffect } from "react";
-import { GameState, Player } from "../../../../types";
+import { GameState, Player, Property, Card } from "../../../../types";
+
+const squares = [
+    { name: "GO", type: "go" },
+    { name: "Virtual Plaza", type: "property", group: "brown" },
+    { name: "System Chest", type: "community_chest" },
+    { name: "Neon District", type: "property", group: "brown" },
+    { name: "Data Tax", type: "tax", amount: 200 },
+    { name: "Neural Station", type: "railroad" },
+    { name: "Cyber Avenue", type: "property", group: "light_blue" },
+    { name: "Quantum Chance", type: "chance" },
+    { name: "Data Street", type: "property", group: "light_blue" },
+    { name: "Matrix Boulevard", type: "property", group: "light_blue" },
+    { name: "Jail", type: "jail" },
+    { name: "Tech Central", type: "property", group: "pink" },
+    { name: "Power Grid", type: "utility" },
+    { name: "AI Labs", type: "property", group: "pink" },
+    { name: "Neural Network", type: "property", group: "pink" },
+    { name: "Cyber Station", type: "railroad" },
+    { name: "Quantum Plaza", type: "property", group: "orange" },
+    { name: "System Chest", type: "community_chest" },
+    { name: "Hologram Heights", type: "property", group: "orange" },
+    { name: "Crypto Corner", type: "property", group: "orange" },
+    { name: "Free Parking", type: "free_parking" },
+    { name: "Digital Domain", type: "property", group: "red" },
+    { name: "Quantum Chance", type: "chance" },
+    { name: "Cloud City", type: "property", group: "red" },
+    { name: "Meta Metropolis", type: "property", group: "red" },
+    { name: "Virtual Station", type: "railroad" },
+    { name: "Blockchain Boulevard", type: "property", group: "yellow" },
+    { name: "NFT Plaza", type: "property", group: "yellow" },
+    { name: "Data Center", type: "utility" },
+    { name: "Token Tower", type: "property", group: "yellow" },
+    { name: "Go to Jail", type: "go_to_jail" },
+    { name: "Cyberpunk Central", type: "property", group: "green" },
+    { name: "Neo Tokyo", type: "property", group: "green" },
+    { name: "System Chest", type: "community_chest" },
+    { name: "Future City", type: "property", group: "green" },
+    { name: "Mainframe Station", type: "railroad" },
+    { name: "Quantum Chance", type: "chance" },
+    { name: "Virtual Nexus", type: "property", group: "dark_blue" },
+    { name: "System Tax", type: "tax", amount: 100 },
+    { name: "Digital Paradise", type: "property", group: "dark_blue" },
+];
 
 const useMonopoly = () => {
     const [gameState, setGameState] = useState<GameState | null>(null);
+    const [modalProperty, setModalProperty] = useState<Property | null>(null);
+    const [modalCard, setModalCard] = useState<Card | null>(null);
+
+    const closeModal = () => {
+        setModalProperty(null);
+        setModalCard(null);
+    };
 
     useEffect(() => {
         const initialGameState: GameState = {
@@ -64,6 +114,7 @@ const useMonopoly = () => {
                     rent: [2, 10, 30, 90, 160, 250],
                     owner: null,
                     houses: 0,
+                    housePrice: 50,
                 },
                 3: {
                     name: "Neon District",
@@ -72,6 +123,7 @@ const useMonopoly = () => {
                     rent: [4, 20, 60, 180, 320, 450],
                     owner: null,
                     houses: 0,
+                    housePrice: 50,
                 },
                 6: {
                     name: "Cyber Avenue",
@@ -80,6 +132,7 @@ const useMonopoly = () => {
                     rent: [6, 30, 90, 270, 400, 550],
                     owner: null,
                     houses: 0,
+                    housePrice: 50,
                 },
                 8: {
                     name: "Data Street",
@@ -88,6 +141,7 @@ const useMonopoly = () => {
                     rent: [6, 30, 90, 270, 400, 550],
                     owner: null,
                     houses: 0,
+                    housePrice: 50,
                 },
                 9: {
                     name: "Matrix Boulevard",
@@ -96,6 +150,7 @@ const useMonopoly = () => {
                     rent: [8, 40, 100, 300, 450, 600],
                     owner: null,
                     houses: 0,
+                    housePrice: 50,
                 },
                 11: {
                     name: "Tech Central",
@@ -104,6 +159,7 @@ const useMonopoly = () => {
                     rent: [10, 50, 150, 450, 625, 750],
                     owner: null,
                     houses: 0,
+                    housePrice: 50,
                 },
                 13: {
                     name: "AI Labs",
@@ -112,6 +168,7 @@ const useMonopoly = () => {
                     rent: [10, 50, 150, 450, 625, 750],
                     owner: null,
                     houses: 0,
+                    housePrice: 50,
                 },
                 14: {
                     name: "Neural Network",
@@ -120,6 +177,7 @@ const useMonopoly = () => {
                     rent: [12, 60, 180, 500, 700, 900],
                     owner: null,
                     houses: 0,
+                    housePrice: 50,
                 },
                 16: {
                     name: "Quantum Plaza",
@@ -128,6 +186,7 @@ const useMonopoly = () => {
                     rent: [14, 70, 200, 550, 750, 950],
                     owner: null,
                     houses: 0,
+                    housePrice: 100,
                 },
                 18: {
                     name: "Hologram Heights",
@@ -136,6 +195,7 @@ const useMonopoly = () => {
                     rent: [14, 70, 200, 550, 750, 950],
                     owner: null,
                     houses: 0,
+                    housePrice: 100,
                 },
                 19: {
                     name: "Crypto Corner",
@@ -144,6 +204,7 @@ const useMonopoly = () => {
                     rent: [16, 80, 220, 600, 800, 1000],
                     owner: null,
                     houses: 0,
+                    housePrice: 100,
                 },
                 21: {
                     name: "Digital Domain",
@@ -152,6 +213,7 @@ const useMonopoly = () => {
                     rent: [18, 90, 250, 700, 875, 1050],
                     owner: null,
                     houses: 0,
+                    housePrice: 150,
                 },
                 23: {
                     name: "Cloud City",
@@ -160,6 +222,7 @@ const useMonopoly = () => {
                     rent: [18, 90, 250, 700, 875, 1050],
                     owner: null,
                     houses: 0,
+                    housePrice: 150,
                 },
                 24: {
                     name: "Meta Metropolis",
@@ -168,6 +231,7 @@ const useMonopoly = () => {
                     rent: [20, 100, 300, 750, 925, 1100],
                     owner: null,
                     houses: 0,
+                    housePrice: 150,
                 },
                 26: {
                     name: "Blockchain Boulevard",
@@ -176,6 +240,7 @@ const useMonopoly = () => {
                     rent: [22, 110, 330, 800, 975, 1150],
                     owner: null,
                     houses: 0,
+                    housePrice: 200,
                 },
                 27: {
                     name: "NFT Plaza",
@@ -184,6 +249,7 @@ const useMonopoly = () => {
                     rent: [22, 110, 330, 800, 975, 1150],
                     owner: null,
                     houses: 0,
+                    housePrice: 200,
                 },
                 29: {
                     name: "Token Tower",
@@ -192,6 +258,7 @@ const useMonopoly = () => {
                     rent: [24, 120, 360, 850, 1025, 1200],
                     owner: null,
                     houses: 0,
+                    housePrice: 200,
                 },
                 31: {
                     name: "Cyberpunk Central",
@@ -200,6 +267,7 @@ const useMonopoly = () => {
                     rent: [26, 130, 390, 900, 1100, 1275],
                     owner: null,
                     houses: 0,
+                    housePrice: 200,
                 },
                 32: {
                     name: "Neo Tokyo",
@@ -208,6 +276,7 @@ const useMonopoly = () => {
                     rent: [26, 130, 390, 900, 1100, 1275],
                     owner: null,
                     houses: 0,
+                    housePrice: 200,
                 },
                 34: {
                     name: "Future City",
@@ -216,6 +285,7 @@ const useMonopoly = () => {
                     rent: [28, 150, 450, 1000, 1200, 1400],
                     owner: null,
                     houses: 0,
+                    housePrice: 200,
                 },
                 37: {
                     name: "Virtual Nexus",
@@ -224,6 +294,7 @@ const useMonopoly = () => {
                     rent: [35, 175, 500, 1100, 1300, 1500],
                     owner: null,
                     houses: 0,
+                    housePrice: 200,
                 },
                 39: {
                     name: "Digital Paradise",
@@ -232,6 +303,7 @@ const useMonopoly = () => {
                     rent: [50, 200, 600, 1400, 1700, 2000],
                     owner: null,
                     houses: 0,
+                    housePrice: 200,
                 },
             },
             railroads: {
@@ -270,6 +342,15 @@ const useMonopoly = () => {
                     text: "Make general repairs: Pay 25 credits per house, 100 credits per hotel",
                     action: "repair_buildings",
                 },
+                {
+                    text: "You have been elected chairman of the board, pay each player 50 credits",
+                    action: "pay_each_player",
+                    amount: 50,
+                },
+                {
+                    text: "Get out of Jail Free",
+                    action: "get_out_of_jail_free",
+                },
             ],
             communityChestCards: [
                 {
@@ -296,6 +377,10 @@ const useMonopoly = () => {
                     text: "Go directly to GO and collect 200 credits",
                     action: "move_to_go",
                     amount: 200,
+                },
+                {
+                    text: "Get out of Jail Free",
+                    action: "get_out_of_jail_free",
                 },
             ],
         };
@@ -414,6 +499,49 @@ const useMonopoly = () => {
         };
     };
 
+    const payRent = (payerId: number, propertyPosition: number) => {
+        if (!gameState) return;
+
+        const property = gameState.properties[propertyPosition];
+        const railroad = gameState.railroads[propertyPosition];
+        const utility = gameState.utilities[propertyPosition];
+
+        const item = property || railroad || utility;
+
+        if (!item || !item.owner || item.owner === payerId) {
+            return;
+        }
+
+        const ownerId = item.owner;
+        let rentAmount = 0;
+
+        if (property) {
+            // Rent for properties is based on the number of houses.
+            rentAmount = property.rent[property.houses];
+        } else if (railroad) {
+            const owner = gameState.players.find(p => p.id === ownerId);
+            if (owner) {
+                const railroadCount = owner.properties.filter(p => gameState.railroads[p]).length;
+                // Rent for railroads: 1 owned: 25, 2 owned: 50, 3 owned: 100, 4 owned: 200
+                rentAmount = 25 * Math.pow(2, railroadCount - 1);
+            }
+        } else if (utility) {
+            const owner = gameState.players.find(p => p.id === ownerId);
+            if (owner) {
+                const utilityCount = owner.properties.filter(p => gameState.utilities[p]).length;
+                const lastRollTotal = gameState.lastRoll[0] + gameState.lastRoll[1];
+                // If one utility is owned, rent is 4 times amount shown on dice.
+                // If both are owned, rent is 10 times amount shown on dice.
+                rentAmount = utilityCount === 1 ? lastRollTotal * 4 : lastRollTotal * 10;
+            }
+        }
+
+        if (rentAmount > 0) {
+            subtractMoney(payerId, rentAmount);
+            addMoney(ownerId, rentAmount);
+        }
+    };
+
     const getGameDuration = () => {
         if (!gameState) return "00:00";
         const elapsed = Date.now() - gameState.gameStartTime;
@@ -432,6 +560,11 @@ const useMonopoly = () => {
         addMoney,
         subtractMoney,
         getGameDuration,
+        payRent,
+        modalProperty,
+        modalCard,
+        closeModal,
+        squares,
     };
 };
 

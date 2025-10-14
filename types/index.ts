@@ -1,4 +1,3 @@
-
 export interface Player {
     id: number;
     name: string;
@@ -17,6 +16,7 @@ export interface Property {
     rent: number[];
     owner: number | null;
     houses: number;
+    housePrice: number;
 }
 
 export interface Railroad {
