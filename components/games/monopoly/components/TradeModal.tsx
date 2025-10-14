@@ -1,4 +1,4 @@
-import { Player, Property } from "@/types";
+import { Player, Property, TradeDetails } from "@/types";
 import { useState } from "react";
 
 interface TradeModalProps {
@@ -6,7 +6,7 @@ interface TradeModalProps {
     onClose: () => void;
     players: Player[];
     properties: { [key: number]: Property };
-    onTrade: (tradeDetails: any) => void;
+    onTrade: (tradeDetails: TradeDetails) => void;
     currentPlayer: Player;
 }
 
@@ -20,6 +20,10 @@ const TradeModal = ({ isOpen, onClose, players, properties, onTrade, currentPlay
     if (!isOpen) return null;
 
     const handleTrade = () => {
+        if (selectedPlayerId === null) {
+            console.error("No player selected for trade.");
+            return;
+        }
         onTrade({
             fromPlayerId: currentPlayer.id,
             toPlayerId: selectedPlayerId,
@@ -93,7 +97,7 @@ const TradeModal = ({ isOpen, onClose, players, properties, onTrade, currentPlay
                     </div>
                 </div>
                 <div className="flex justify-end gap-2">
-                    <button onClick={handleTrade} className="text-xs bg-cyan-500 text-white px-2 py-1 rounded">Propose Trade</button>
+                    <button onClick={handleTrade} disabled={!selectedPlayerId} className="text-xs bg-cyan-500 text-white px-2 py-1 rounded disabled:bg-gray-500 disabled:cursor-not-allowed">Propose Trade</button>
                     <button onClick={onClose} className="text-xs bg-red-500 text-white px-2 py-1 rounded">Cancel</button>
                 </div>
             </div>

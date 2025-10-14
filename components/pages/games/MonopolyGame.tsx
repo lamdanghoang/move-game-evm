@@ -7,7 +7,7 @@ import PlayerStats from "../../games/monopoly/components/PlayerStats";
 import Chat from "../../games/monopoly/components/Chat";
 import Controls from "../../games/monopoly/components/Controls";
 import Modals from "../../games/monopoly/components/Modals";
-import { Card, Player, Property } from "@/types";
+import { Card, Player, Property, TradeDetails } from "@/types";
 import FactionStatus from "@/components/games/monopoly/components/FactionStatus";
 import PropertyPortfolio from "@/components/games/monopoly/components/PropertyPortfolio";
 import StoryEvents from "@/components/games/monopoly/components/StoryEvent";
@@ -359,7 +359,7 @@ const MonopolyGame = () => {
         }
     };
 
-    const handleTrade = (tradeDetails: any) => {
+    const handleTrade = (tradeDetails: TradeDetails) => {
         const {
             fromPlayerId,
             toPlayerId,

@@ -61,3 +61,12 @@ export interface GameState {
     chanceCards: Card[];
     communityChestCards: Card[];
 }
+
+export interface TradeDetails {
+    fromPlayerId: number;
+    toPlayerId: number;
+    offeredProperties: number[];
+    requestedProperties: number[];
+    offeredMoney: number;
+    requestedMoney: number;
+}
