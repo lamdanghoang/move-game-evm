@@ -8,7 +8,7 @@ interface DiceProps {
     onRoll?: (value: number) => void;
     className?: string;
     disabled?: boolean;
-    size?: "sm" | "md" | "lg";
+    size?: "xs" | "sm" | "md" | "lg";
 }
 
 export interface DiceRef {
@@ -105,12 +105,14 @@ const Dice = forwardRef<DiceRef, DiceProps>(
         };
 
         const sizeClasses = {
+            xs: "w-10 h-10",
             sm: "w-16 h-16",
             md: "w-24 h-24",
             lg: "w-32 h-32",
         };
 
         const dotSizeClasses = {
+            xs: "w-1.5 h-1.5",
             sm: "w-2 h-2",
             md: "w-3 h-3",
             lg: "w-4 h-4",
@@ -182,23 +184,49 @@ const Dice = forwardRef<DiceRef, DiceProps>(
                                         height: "100%",
                                         width: "100%",
                                         padding:
-                                            size === "sm"
+                                            size === "xs"
+                                                ? "0.25rem"
+                                                : size === "sm"
                                                 ? "0.5rem"
                                                 : size === "md"
                                                 ? "0.75rem"
                                                 : "1rem",
                                         transform:
                                             side === 1
-                                                ? "translateZ(3rem)"
+                                                ? `translateZ(${
+                                                      size === "xs"
+                                                          ? "1.25rem"
+                                                          : "3rem"
+                                                  })`
                                                 : side === 6
-                                                ? "rotateY(180deg) translateZ(3rem)"
+                                                ? `rotateY(180deg) translateZ(${
+                                                      size === "xs"
+                                                          ? "1.25rem"
+                                                          : "3rem"
+                                                  })`
                                                 : side === 2
-                                                ? "rotateY(90deg) translateZ(3rem)"
+                                                ? `rotateY(90deg) translateZ(${
+                                                      size === "xs"
+                                                          ? "1.25rem"
+                                                          : "3rem"
+                                                  })`
                                                 : side === 5
-                                                ? "rotateY(-90deg) translateZ(3rem)"
+                                                ? `rotateY(-90deg) translateZ(${
+                                                      size === "xs"
+                                                          ? "1.25rem"
+                                                          : "3rem"
+                                                  })`
                                                 : side === 3
-                                                ? "rotateX(90deg) translateZ(3rem)"
-                                                : "rotateX(-90deg) translateZ(3rem)",
+                                                ? `rotateX(90deg) translateZ(${
+                                                      size === "xs"
+                                                          ? "1.25rem"
+                                                          : "3rem"
+                                                  })`
+                                                : `rotateX(-90deg) translateZ(${
+                                                      size === "xs"
+                                                          ? "1.25rem"
+                                                          : "3rem"
+                                                  })`,
                                     }}
                                 >
                                     {Array.from({ length: side }).map(
