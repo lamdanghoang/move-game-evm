@@ -111,7 +111,8 @@ const MonopolyGame = () => {
                 currentPlayer={currentPlayer!}
             />
             <AnimatePresence>
-                {(buildingPropertyId !== null || recentlyPurchasedId !== null) &&
+                {(buildingPropertyId !== null ||
+                    recentlyPurchasedId !== null) &&
                     (() => {
                         if (buildingPropertyId !== null) {
                             const property =
@@ -168,7 +169,7 @@ const MonopolyGame = () => {
                                     exit={{ opacity: 0 }}
                                 >
                                     <motion.div
-                                        className="text-white text-6xl font-bold"
+                                        className="text-white text-4xl font-semibold"
                                         initial={{ scale: 0.5, opacity: 0 }}
                                         animate={{ scale: 1, opacity: 1 }}
                                         transition={{
@@ -177,7 +178,7 @@ const MonopolyGame = () => {
                                             damping: 20,
                                         }}
                                     >
-                                        Building...
+                                        Buying property...
                                     </motion.div>
                                 </motion.div>
                             );
