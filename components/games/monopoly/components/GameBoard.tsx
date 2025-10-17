@@ -1,23 +1,13 @@
 import { GameState } from "@/types";
-import Controls from "./Controls";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface GameBoardProps {
     gameState: GameState;
-    onRollDice: () => void;
-    onEndTurn: () => void;
-    onBuyProperty: () => void;
-    lastRoll: [number, number];
-    hasRolled: boolean;
+    recentlyPurchasedId: number | null;
+    recentlyBuiltId: number | null;
 }
 
-const GameBoard: React.FC<GameBoardProps> = ({
-    gameState,
-    onRollDice,
-    onEndTurn,
-    onBuyProperty,
-    lastRoll,
-    hasRolled,
-}) => {
+const GameBoard: React.FC<GameBoardProps> = ({ gameState, recentlyPurchasedId, recentlyBuiltId }) => {
     const squares = [
         { name: "GO", type: "go" },
         { name: "Virtual Plaza", type: "property", group: "brown" },
@@ -68,19 +58,102 @@ const GameBoard: React.FC<GameBoardProps> = ({
                     gameState.properties[index] ||
                     gameState.railroads[index] ||
                     gameState.utilities[index];
+
+                const owner =
+                    property && property.owner
+                        ? gameState.players.find((p) => p.id === property.owner)
+                        : null;
+
                 return (
                     <div
                         key={index}
                         className={`boardSquare ${`square-${index}`}
                          ${square.type} ${
                             square.group ? square.group : ""
-                        } ${`${
+                        } transition-all duration-300 ${`${
                             (index === 0 && "rounded-br-lg") ||
                             (index === 10 && "rounded-bl-lg") ||
                             (index === 20 && "rounded-tl-lg") ||
                             (index === 30 && "rounded-tr-lg")
                         }`}`}
+                        style={{
+                            boxShadow: owner
+                                ? `inset 0 0 0 4px ${owner.color}`
+                                : "none",
+                        }}
                     >
+                        <AnimatePresence>
+                            {recentlyPurchasedId === index && (
+                                <motion.div
+                                    className="absolute inset-0 bg-white/50"
+                                    initial={{ opacity: 0, scale: 0.5 }}
+                                    animate={{
+                                        opacity: [0, 1, 0],
+                                        scale: [0.5, 1.2, 1],
+                                    }}
+                                    transition={{ duration: 0.5 }}
+                                />
+                            )}
+                        </AnimatePresence>
+                        <AnimatePresence>
+                            {square.type === "property" &&
+                                property &&
+                                "houses" in property &&
+                                property.houses > 0 && (
+                                    <motion.div
+                                        className="absolute top-1 left-1/2 -translate-x-1/2 flex gap-0.5"
+                                        initial={{ opacity: 0, y: -10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -10 }}
+                                    >
+                                        {property.houses < 5 &&
+                                            Array.from({
+                                                length: property.houses,
+                                            }).map((_, i) => (
+                                                <motion.div
+                                                    key={i}
+                                                    className="w-1.5 h-1.5 bg-green-500 rounded-sm"
+                                                    initial={{
+                                                        scale: 0,
+                                                        opacity: 0,
+                                                    }}
+                                                    animate={{
+                                                        scale: 1,
+                                                        opacity: 1,
+                                                    }}
+                                                    exit={{
+                                                        scale: 0,
+                                                        opacity: 0,
+                                                    }}
+                                                    transition={{
+                                                        delay:
+                                                            recentlyBuiltId ===
+                                                            index
+                                                                ? i * 0.1
+                                                                : 0,
+                                                    }}
+                                                />
+                                            ))}
+                                        {property.houses === 5 && (
+                                            <motion.div
+                                                className="w-3 h-1.5 bg-red-500 rounded-sm"
+                                                initial={{
+                                                    scale: 0,
+                                                    opacity: 0,
+                                                }}
+                                                animate={{
+                                                    scale: 1,
+                                                    opacity: 1,
+                                                }}
+                                                exit={{
+                                                    scale: 0,
+                                                    opacity: 0,
+                                                }}
+                                            />
+                                        )}
+                                    </motion.div>
+                                )}
+                        </AnimatePresence>
                         <div
                             className={`squareName ${
                                 (square.type === "go" ||
@@ -116,13 +189,6 @@ const GameBoard: React.FC<GameBoardProps> = ({
                     </div>
                 );
             })}
-            <Controls
-                onRollDice={onRollDice}
-                onEndTurn={onEndTurn}
-                onBuyProperty={onBuyProperty}
-                lastRoll={gameState.lastRoll}
-                hasRolled={hasRolled}
-            />
         </div>
     );
 };

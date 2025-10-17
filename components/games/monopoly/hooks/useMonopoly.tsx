@@ -1,5 +1,12 @@
 import { useState, useEffect } from "react";
-import { GameState, Player, Property, Card } from "../../../../types";
+import {
+    GameState,
+    Player,
+    Property,
+    Card,
+    GameEvent,
+    TradeDetails,
+} from "@/types";
 
 const squares = [
     { name: "GO", type: "go" },
@@ -48,6 +55,27 @@ const useMonopoly = () => {
     const [gameState, setGameState] = useState<GameState | null>(null);
     const [modalProperty, setModalProperty] = useState<Property | null>(null);
     const [modalCard, setModalCard] = useState<Card | null>(null);
+    const [hasRolled, setHasRolled] = useState(false);
+    const [animation, setAnimation] = useState<{
+        playerId: number;
+        startPosition: number;
+        endPosition: number;
+        currentPosition: number;
+    } | null>(null);
+
+    const addLog = (text: string) => {
+        setGameState((prev) => {
+            if (!prev) return null;
+            const newLogEntry: GameEvent = {
+                time: new Date().toLocaleTimeString(),
+                text,
+            };
+            return {
+                ...prev,
+                gameLog: [...prev.gameLog, newLogEntry],
+            };
+        });
+    };
 
     const closeModal = () => {
         setModalProperty(null);
@@ -383,9 +411,39 @@ const useMonopoly = () => {
                     action: "get_out_of_jail_free",
                 },
             ],
+            gameLog: [],
         };
         setGameState(initialGameState);
     }, []);
+
+    useEffect(() => {
+        if (!animation) return;
+
+        const { playerId, endPosition, currentPosition } = animation;
+
+        if (currentPosition === endPosition) {
+            setAnimation(null);
+            const player = gameState!.players.find((p) => p.id === playerId)!;
+            handleSquareLanding(player, player.position);
+            return;
+        }
+
+        const timeout = setTimeout(() => {
+            const nextPosition = (currentPosition + 1) % 40;
+            setGameState((prev) => ({
+                ...prev!,
+                players: prev!.players.map((p) =>
+                    p.id === playerId ? { ...p, position: nextPosition } : p
+                ),
+            }));
+            setAnimation({
+                ...animation,
+                currentPosition: nextPosition,
+            });
+        }, 200);
+
+        return () => clearTimeout(timeout);
+    }, [animation, gameState]);
 
     const getCurrentPlayer = () => {
         if (!gameState) return null;
@@ -425,6 +483,7 @@ const useMonopoly = () => {
             );
 
             if (newMoney === 0 && getTotalAssets(player) === 0) {
+                addLog(`${player.name} has gone bankrupt!`);
                 return handleBankruptcy(player, {
                     ...prev!,
                     players: updatedPlayers,
@@ -519,24 +578,36 @@ const useMonopoly = () => {
             // Rent for properties is based on the number of houses.
             rentAmount = property.rent[property.houses];
         } else if (railroad) {
-            const owner = gameState.players.find(p => p.id === ownerId);
+            const owner = gameState.players.find((p) => p.id === ownerId);
             if (owner) {
-                const railroadCount = owner.properties.filter(p => gameState.railroads[p]).length;
+                const railroadCount = owner.properties.filter(
+                    (p) => gameState.railroads[p]
+                ).length;
                 // Rent for railroads: 1 owned: 25, 2 owned: 50, 3 owned: 100, 4 owned: 200
                 rentAmount = 25 * Math.pow(2, railroadCount - 1);
             }
         } else if (utility) {
-            const owner = gameState.players.find(p => p.id === ownerId);
+            const owner = gameState.players.find((p) => p.id === ownerId);
             if (owner) {
-                const utilityCount = owner.properties.filter(p => gameState.utilities[p]).length;
-                const lastRollTotal = gameState.lastRoll[0] + gameState.lastRoll[1];
+                const utilityCount = owner.properties.filter(
+                    (p) => gameState.utilities[p]
+                ).length;
+                const lastRollTotal =
+                    gameState.lastRoll[0] + gameState.lastRoll[1];
                 // If one utility is owned, rent is 4 times amount shown on dice.
                 // If both are owned, rent is 10 times amount shown on dice.
-                rentAmount = utilityCount === 1 ? lastRollTotal * 4 : lastRollTotal * 10;
+                rentAmount =
+                    utilityCount === 1 ? lastRollTotal * 4 : lastRollTotal * 10;
             }
         }
 
         if (rentAmount > 0) {
+            const owner = gameState.players.find((p) => p.id === ownerId);
+            addLog(
+                `${
+                    gameState.players.find((p) => p.id === payerId)?.name
+                } paid ${rentAmount} credits in rent to ${owner?.name}.`
+            );
             subtractMoney(payerId, rentAmount);
             addMoney(ownerId, rentAmount);
         }
@@ -552,8 +623,6 @@ const useMonopoly = () => {
             .padStart(2, "0")}`;
     };
 
-    const [hasRolled, setHasRolled] = useState(false);
-
     const handleRollDice = () => {
         const currentPlayer = getCurrentPlayer();
         if (!currentPlayer || hasRolled) return;
@@ -568,6 +637,12 @@ const useMonopoly = () => {
         const total = dice1 + dice2;
         const isDouble = dice1 === dice2;
 
+        addLog(
+            `${currentPlayer.name} rolled a ${total} (${dice1} + ${dice2})${
+                isDouble ? " (double)" : ""
+            }`
+        );
+
         setGameState((prev) => ({
             ...prev!,
             lastRoll: [dice1, dice2],
@@ -575,7 +650,9 @@ const useMonopoly = () => {
         }));
 
         if (isDouble && gameState!.doubleRollCount >= 2) {
-            // Go to jail
+            addLog(
+                `${currentPlayer.name} rolled three doubles in a row and went to jail!`
+            );
             setGameState((prev) => ({
                 ...prev!,
                 players: prev!.players.map((p) =>
@@ -592,17 +669,20 @@ const useMonopoly = () => {
         const newPosition = (oldPosition + total) % 40;
 
         if (newPosition < oldPosition) {
+            addLog(
+                `${currentPlayer.name} passed GO and collected 200 credits.`
+            );
             addMoney(currentPlayer.id, 200);
         }
 
-        setGameState((prev) => ({
-            ...prev!,
-            players: prev!.players.map((p) =>
-                p.id === currentPlayer.id ? { ...p, position: newPosition } : p
-            ),
-        }));
-
-        handleSquareLanding(currentPlayer, newPosition);
+        setTimeout(() => {
+            setAnimation({
+                playerId: currentPlayer.id,
+                startPosition: oldPosition,
+                endPosition: newPosition,
+                currentPosition: oldPosition,
+            });
+        }, 1400);
 
         if (!isDouble) {
             setHasRolled(true);
@@ -611,15 +691,31 @@ const useMonopoly = () => {
 
     const handleJailRoll = () => {
         const currentPlayer = getCurrentPlayer();
+
         if (!currentPlayer) return;
 
         const dice1 = Math.floor(Math.random() * 6) + 1;
+
         const dice2 = Math.floor(Math.random() * 6) + 1;
+
         const isDouble = dice1 === dice2;
 
+        addLog(
+            `${currentPlayer.name} is in jail and rolled a ${dice1} + ${dice2}${
+                isDouble ? " (double)" : ""
+            }`
+        );
+
+        setGameState((prev) => ({ ...prev!, lastRoll: [dice1, dice2] }));
+
         if (isDouble) {
+            addLog(
+                `${currentPlayer.name} rolled a double and got out of jail!`
+            );
+
             setGameState((prev) => ({
                 ...prev!,
+
                 players: prev!.players.map((p) =>
                     p.id === currentPlayer.id
                         ? { ...p, inJail: false, jailTurns: 0 }
@@ -629,16 +725,24 @@ const useMonopoly = () => {
         } else {
             setGameState((prev) => ({
                 ...prev!,
+
                 players: prev!.players.map((p) =>
                     p.id === currentPlayer.id
                         ? { ...p, jailTurns: p.jailTurns + 1 }
                         : p
                 ),
             }));
+
             if (currentPlayer.jailTurns >= 2) {
+                addLog(
+                    `${currentPlayer.name} did not roll a double for 3 turns and paid 50 credits to get out of jail.`
+                );
+
                 subtractMoney(currentPlayer.id, 50);
+
                 setGameState((prev) => ({
                     ...prev!,
+
                     players: prev!.players.map((p) =>
                         p.id === currentPlayer.id
                             ? { ...p, inJail: false, jailTurns: 0 }
@@ -646,6 +750,7 @@ const useMonopoly = () => {
                     ),
                 }));
             }
+
             nextPlayer();
         }
     };
@@ -653,6 +758,7 @@ const useMonopoly = () => {
     const handlePayJailFine = () => {
         const currentPlayer = getCurrentPlayer();
         if (!currentPlayer) return;
+        addLog(`${currentPlayer.name} paid 50 credits to get out of jail.`);
         subtractMoney(currentPlayer.id, 50);
         setGameState((prev) => ({
             ...prev!,
@@ -667,6 +773,7 @@ const useMonopoly = () => {
     const useGetOutOfJailCard = () => {
         const currentPlayer = getCurrentPlayer();
         if (!currentPlayer) return;
+        addLog(`${currentPlayer.name} used a Get Out of Jail Free card.`);
         // This should be handled by a card state
         setGameState((prev) => ({
             ...prev!,
@@ -683,6 +790,35 @@ const useMonopoly = () => {
         setHasRolled(false);
     };
 
+    const [recentlyPurchasedId, setRecentlyPurchasedId] = useState<
+        number | null
+    >(null);
+    const [recentlyBuiltId, setRecentlyBuiltId] = useState<number | null>(null);
+    const [buildingPropertyId, setBuildingPropertyId] = useState<number | null>(
+        null
+    );
+
+    useEffect(() => {
+        if (recentlyPurchasedId) {
+            const timer = setTimeout(() => setRecentlyPurchasedId(null), 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [recentlyPurchasedId]);
+
+    useEffect(() => {
+        if (recentlyBuiltId) {
+            const timer = setTimeout(() => setRecentlyBuiltId(null), 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [recentlyBuiltId]);
+
+    useEffect(() => {
+        if (buildingPropertyId) {
+            const timer = setTimeout(() => setBuildingPropertyId(null), 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [buildingPropertyId]);
+
     const handleBuyProperty = () => {
         const currentPlayer = getCurrentPlayer();
         if (!currentPlayer) return;
@@ -695,6 +831,9 @@ const useMonopoly = () => {
             !property.owner &&
             currentPlayer.money >= property.price
         ) {
+            addLog(
+                `${currentPlayer.name} bought ${property.name} for ${property.price} credits.`
+            );
             subtractMoney(currentPlayer.id, property.price);
             const newProperties = { ...gameState!.properties };
             if (newProperties[currentPlayer.position]) {
@@ -725,6 +864,7 @@ const useMonopoly = () => {
                         : p
                 ),
             }));
+            setRecentlyPurchasedId(currentPlayer.position);
         }
     };
 
@@ -747,6 +887,9 @@ const useMonopoly = () => {
             currentPlayer.money >= property.housePrice &&
             property.houses < 5
         ) {
+            addLog(
+                `${currentPlayer.name} bought a house on ${property.name} for ${property.housePrice} credits.`
+            );
             subtractMoney(currentPlayer.id, property.housePrice);
             const newProperties = { ...gameState!.properties };
             newProperties[propertyId].houses++;
@@ -754,11 +897,14 @@ const useMonopoly = () => {
                 ...prev!,
                 properties: newProperties,
             }));
+            setRecentlyBuiltId(propertyId);
+            setBuildingPropertyId(propertyId);
         }
     };
 
     const handleSquareLanding = (player: Player, position: number) => {
         const square = squares[position];
+        addLog(`${player.name} landed on ${square.name}`);
         switch (square.type) {
             case "property":
             case "railroad":
@@ -775,24 +921,39 @@ const useMonopoly = () => {
                 break;
             case "chance":
                 const chanceCard =
-                    gameState!
-                        .chanceCards[
-                        Math.floor(Math.random() * gameState!.chanceCards.length)
+                    gameState!.chanceCards[
+                        Math.floor(
+                            Math.random() * gameState!.chanceCards.length
+                        )
                     ];
                 setModalCard(chanceCard);
+                addLog(
+                    `${player.name} landed on Quantum Chance and drew a card: ${chanceCard.text}`
+                );
                 handleCardAction(player, chanceCard);
                 break;
             case "community_chest":
                 const communityChestCard =
                     gameState!.communityChestCards[
                         Math.floor(
-                            Math.random() * gameState!.communityChestCards.length
+                            Math.random() *
+                                gameState!.communityChestCards.length
                         )
                     ];
                 setModalCard(communityChestCard);
+                addLog(
+                    `${player.name} landed on System Chest and drew a card: ${communityChestCard.text}`
+                );
                 handleCardAction(player, communityChestCard);
                 break;
+            case "tax":
+                addLog(
+                    `${player.name} paid ${square.amount} credits in ${square.name}.`
+                );
+                subtractMoney(player.id, square.amount || 0);
+                break;
             case "go_to_jail":
+                addLog(`${player.name} went to jail!`);
                 setGameState((prev) => ({
                     ...prev!,
                     players: prev!.players.map((p) =>
@@ -881,7 +1042,7 @@ const useMonopoly = () => {
         }
     };
 
-    const handleTrade = (tradeDetails: any) => {
+    const handleTrade = (tradeDetails: TradeDetails) => {
         const {
             fromPlayerId,
             toPlayerId,
@@ -891,10 +1052,14 @@ const useMonopoly = () => {
             requestedMoney,
         } = tradeDetails;
 
-        const fromPlayer = gameState!.players.find((p) => p.id === fromPlayerId);
+        const fromPlayer = gameState!.players.find(
+            (p) => p.id === fromPlayerId
+        );
         const toPlayer = gameState!.players.find((p) => p.id === toPlayerId);
 
         if (!fromPlayer || !toPlayer) return;
+
+        addLog(`${fromPlayer.name} and ${toPlayer.name} are trading.`);
 
         // Money transfer
         subtractMoney(fromPlayerId, offeredMoney);
@@ -975,6 +1140,9 @@ const useMonopoly = () => {
         handlePayJailFine,
         useGetOutOfJailCard,
         handleTrade,
+        recentlyPurchasedId,
+        recentlyBuiltId,
+        buildingPropertyId,
     };
 };
 

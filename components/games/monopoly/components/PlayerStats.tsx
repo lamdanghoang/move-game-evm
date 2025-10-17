@@ -4,11 +4,14 @@ import { Player } from "@/types";
 interface PlayerStatsProps {
     player: Player;
     onTrade: () => void;
+    isCurrentPlayer: boolean;
 }
 
-const PlayerStats: React.FC<PlayerStatsProps> = ({ player, onTrade }) => {
+const PlayerStats: React.FC<PlayerStatsProps> = ({ player, onTrade, isCurrentPlayer }) => {
     return (
-        <div className="bg-neutral-800 border border-zinc-500/20 rounded-2xl p-4 flex flex-col gap-3">
+        <div className={`bg-neutral-800 border border-zinc-500/20 rounded-2xl p-4 flex flex-col gap-3 ${
+            isCurrentPlayer ? "border-cyan-500" : ""
+        }`}>
             <h3 className="text-base text-cyan-500 text-shadow-[0_0_10px_rgba(50,184,198,0.5)] font-semibold">
                 Player Stats
             </h3>

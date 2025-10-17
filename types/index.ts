@@ -60,6 +60,7 @@ export interface GameState {
     utilities: { [key: number]: Utility };
     chanceCards: Card[];
     communityChestCards: Card[];
+    gameLog: GameEvent[];
 }
 
 export interface TradeDetails {
@@ -69,4 +70,9 @@ export interface TradeDetails {
     requestedProperties: number[];
     offeredMoney: number;
     requestedMoney: number;
+}
+
+export interface GameEvent {
+    time: string;
+    text: string;
 }

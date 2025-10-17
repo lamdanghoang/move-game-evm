@@ -1,5 +1,9 @@
 import { Player, Property, TradeDetails } from "@/types";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface TradeModalProps {
     isOpen: boolean;
@@ -10,10 +14,21 @@ interface TradeModalProps {
     currentPlayer: Player;
 }
 
-const TradeModal = ({ isOpen, onClose, players, properties, onTrade, currentPlayer }: TradeModalProps) => {
-    const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null);
+const TradeModal = ({
+    isOpen,
+    onClose,
+    players,
+    properties,
+    onTrade,
+    currentPlayer,
+}: TradeModalProps) => {
+    const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(
+        null
+    );
     const [offeredProperties, setOfferedProperties] = useState<number[]>([]);
-    const [requestedProperties, setRequestedProperties] = useState<number[]>([]);
+    const [requestedProperties, setRequestedProperties] = useState<number[]>(
+        []
+    );
     const [offeredMoney, setOfferedMoney] = useState(0);
     const [requestedMoney, setRequestedMoney] = useState(0);
 
@@ -24,6 +39,18 @@ const TradeModal = ({ isOpen, onClose, players, properties, onTrade, currentPlay
             console.error("No player selected for trade.");
             return;
         }
+        if (offeredMoney > currentPlayer.money) {
+            console.error("You don't have enough money to make this offer.");
+            return;
+        }
+        const selectedPlayer = players.find((p) => p.id === selectedPlayerId);
+        if (selectedPlayer && requestedMoney > selectedPlayer.money) {
+            console.error(
+                "The other player doesn't have enough money for this trade."
+            );
+            return;
+        }
+
         onTrade({
             fromPlayerId: currentPlayer.id,
             toPlayerId: selectedPlayerId,
@@ -34,73 +61,170 @@ const TradeModal = ({ isOpen, onClose, players, properties, onTrade, currentPlay
         });
     };
 
-    const otherPlayers = players.filter(p => p.id !== currentPlayer.id);
+    const otherPlayers = players.filter((p) => p.id !== currentPlayer.id);
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <div className="bg-neutral-800 border border-zinc-500/20 rounded-2xl p-4 flex flex-col gap-3 w-1/2">
-                <h3 className="text-base text-cyan-500 text-shadow-[0_0_10px_rgba(50,184,198,0.5)] font-semibold">
-                    Trade
-                </h3>
-                <div className="flex gap-4">
-                    <div className="w-1/2">
-                        <h4 className="text-sm font-semibold">Your Offer</h4>
-                        <div>
-                            <label>Money:</label>
-                            <input type="number" value={offeredMoney} onChange={(e) => setOfferedMoney(parseInt(e.target.value))} className="bg-neutral-700 text-white p-1 rounded" />
-                        </div>
-                        <div>
-                            <label>Properties:</label>
-                            {currentPlayer.properties.map(propId => (
-                                <div key={propId}>
-                                    <input type="checkbox" onChange={(e) => {
-                                        if (e.target.checked) {
-                                            setOfferedProperties([...offeredProperties, propId]);
-                                        } else {
-                                            setOfferedProperties(offeredProperties.filter(id => id !== propId));
-                                        }
-                                    }} />
-                                    {properties[propId]?.name}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                    <div className="w-1/2">
-                        <h4 className="text-sm font-semibold">Their Offer</h4>
-                        <select onChange={(e) => setSelectedPlayerId(parseInt(e.target.value))} className="bg-neutral-700 text-white p-1 rounded">
-                            <option>Select Player</option>
-                            {otherPlayers.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                        </select>
-                        {selectedPlayerId && (
-                            <>
-                                <div>
-                                    <label>Money:</label>
-                                    <input type="number" value={requestedMoney} onChange={(e) => setRequestedMoney(parseInt(e.target.value))} className="bg-neutral-700 text-white p-1 rounded" />
-                                </div>
-                                <div>
-                                    <label>Properties:</label>
-                                    {players.find(p => p.id === selectedPlayerId)?.properties.map(propId => (
-                                        <div key={propId}>
-                                            <input type="checkbox" onChange={(e) => {
-                                                if (e.target.checked) {
-                                                    setRequestedProperties([...requestedProperties, propId]);
-                                                } else {
-                                                    setRequestedProperties(requestedProperties.filter(id => id !== propId));
-                                                }
-                                            }} />
-                                            {properties[propId]?.name}
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <Card className="w-1/2 bg-neutral-800 border-zinc-500/20 text-white">
+                <CardHeader>
+                    <CardTitle className="text-cyan-500">Trade</CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-4">
+                    <div className="flex gap-4">
+                        <div className="w-1/2 flex flex-col gap-2">
+                            <h4 className="text-sm font-semibold">
+                                Your Offer
+                            </h4>
+                            <div>
+                                <Label>Money:</Label>
+                                <Input
+                                    type="number"
+                                    value={offeredMoney}
+                                    onChange={(e) =>
+                                        setOfferedMoney(
+                                            parseInt(e.target.value)
+                                        )
+                                    }
+                                    className="bg-neutral-700"
+                                />
+                            </div>
+                            <div>
+                                <Label>Properties:</Label>
+                                <div className="flex flex-col gap-1">
+                                    {currentPlayer.properties.map((propId) => (
+                                        <div
+                                            key={propId}
+                                            className="flex items-center gap-2"
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                onChange={(e) => {
+                                                    if (e.target.checked) {
+                                                        setOfferedProperties([
+                                                            ...offeredProperties,
+                                                            propId,
+                                                        ]);
+                                                    } else {
+                                                        setOfferedProperties(
+                                                            offeredProperties.filter(
+                                                                (id) =>
+                                                                    id !==
+                                                                    propId
+                                                            )
+                                                        );
+                                                    }
+                                                }}
+                                            />
+                                            <span>
+                                                {properties[propId]?.name}
+                                            </span>
                                         </div>
                                     ))}
                                 </div>
-                            </>
-                        )}
+                            </div>
+                        </div>
+                        <div className="w-1/2 flex flex-col gap-2">
+                            <h4 className="text-sm font-semibold">
+                                Their Offer
+                            </h4>
+                            <select
+                                onChange={(e) =>
+                                    setSelectedPlayerId(
+                                        parseInt(e.target.value)
+                                    )
+                                }
+                                className="bg-neutral-700 p-2 rounded"
+                            >
+                                <option>Select Player</option>
+                                {otherPlayers.map((p) => (
+                                    <option key={p.id} value={p.id}>
+                                        {p.name}
+                                    </option>
+                                ))}
+                            </select>
+                            {selectedPlayerId && (
+                                <>
+                                    <div>
+                                        <Label>Money:</Label>
+                                        <Input
+                                            type="number"
+                                            value={requestedMoney}
+                                            onChange={(e) =>
+                                                setRequestedMoney(
+                                                    parseInt(e.target.value)
+                                                )
+                                            }
+                                            className="bg-neutral-700"
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label>Properties:</Label>
+                                        <div className="flex flex-col gap-1">
+                                            {players
+                                                .find(
+                                                    (p) =>
+                                                        p.id ===
+                                                        selectedPlayerId
+                                                )
+                                                ?.properties.map((propId) => (
+                                                    <div
+                                                        key={propId}
+                                                        className="flex items-center gap-2"
+                                                    >
+                                                        <input
+                                                            type="checkbox"
+                                                            onChange={(e) => {
+                                                                if (
+                                                                    e.target
+                                                                        .checked
+                                                                ) {
+                                                                    setRequestedProperties(
+                                                                        [
+                                                                            ...requestedProperties,
+                                                                            propId,
+                                                                        ]
+                                                                    );
+                                                                } else {
+                                                                    setRequestedProperties(
+                                                                        requestedProperties.filter(
+                                                                            (
+                                                                                id
+                                                                            ) =>
+                                                                                id !==
+                                                                                propId
+                                                                        )
+                                                                    );
+                                                                }
+                                                            }}
+                                                        />
+                                                        <span>
+                                                            {
+                                                                properties[
+                                                                    propId
+                                                                ]?.name
+                                                            }
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </div>
                     </div>
-                </div>
-                <div className="flex justify-end gap-2">
-                    <button onClick={handleTrade} disabled={!selectedPlayerId} className="text-xs bg-cyan-500 text-white px-2 py-1 rounded disabled:bg-gray-500 disabled:cursor-not-allowed">Propose Trade</button>
-                    <button onClick={onClose} className="text-xs bg-red-500 text-white px-2 py-1 rounded">Cancel</button>
-                </div>
-            </div>
+                    <div className="flex justify-end gap-2">
+                        <Button
+                            onClick={handleTrade}
+                            disabled={!selectedPlayerId}
+                        >
+                            Propose Trade
+                        </Button>
+                        <Button onClick={onClose} variant="destructive">
+                            Cancel
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
         </div>
     );
 };

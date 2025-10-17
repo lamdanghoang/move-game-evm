@@ -1,12 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
+interface ChatMessage {
+    text: string;
+}
+
 interface ChatProps {
-    messages: {
-        username: string;
-        time: string;
-        text: string;
-    }[];
+    messages: ChatMessage[];
 }
 
 const Chat: React.FC<ChatProps> = ({ messages }) => {
@@ -17,22 +17,8 @@ const Chat: React.FC<ChatProps> = ({ messages }) => {
             </h3>
             <div className="p-2 h-50 flex flex-col gap-2 bg-zinc-500/15 rounded-lg scroll-hide">
                 {messages.map((msg, index) => (
-                    <div
-                        key={index}
-                        className={`flex flex-col gap-0.5 p-1 ${
-                            msg.username === "System" &&
-                            "bg-cyan-500/10 rounded-md"
-                        }`}
-                    >
-                        <div className="flex gap-2">
-                            <span className="text-cyan-500 font-semibold text-xs">
-                                {msg.username}
-                            </span>
-                            <span className="text-[10px] text-zinc-400/70">
-                                {msg.time}
-                            </span>
-                        </div>
-                        <div className="text-xs/normal">{msg.text}</div>
+                    <div key={index} className="text-xs/normal">
+                        {msg.text}
                     </div>
                 ))}
             </div>
