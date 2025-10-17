@@ -35,6 +35,9 @@ const MonopolyGame = () => {
         recentlyPurchasedId,
         recentlyBuiltId,
         buildingPropertyId,
+        inspectedProperty,
+        inspectProperty,
+        closeInspectModal,
     } = useMonopoly();
     const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
 
@@ -43,6 +46,11 @@ const MonopolyGame = () => {
     }
 
     const currentPlayer = getCurrentPlayer();
+
+    const onBuyProperty = () => {
+        handleBuyProperty();
+        closeModal();
+    };
 
     const onTrade = (tradeDetails: TradeDetails) => {
         handleTrade(tradeDetails);
@@ -78,6 +86,7 @@ const MonopolyGame = () => {
                     gameState={gameState}
                     recentlyPurchasedId={recentlyPurchasedId}
                     recentlyBuiltId={recentlyBuiltId}
+                    inspectProperty={inspectProperty}
                 />
                 <Controls
                     onRollDice={handleRollDice}
@@ -101,6 +110,12 @@ const MonopolyGame = () => {
                 property={modalProperty}
                 card={modalCard}
                 onClose={closeModal}
+                onBuyProperty={onBuyProperty}
+            />
+            <Modals
+                property={inspectedProperty}
+                card={null}
+                onClose={closeInspectModal}
             />
             <TradeModal
                 isOpen={isTradeModalOpen}

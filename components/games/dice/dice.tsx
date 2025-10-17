@@ -9,6 +9,7 @@ interface DiceProps {
     className?: string;
     disabled?: boolean;
     size?: "xs" | "sm" | "md" | "lg";
+    speed?: number;
 }
 
 export interface DiceRef {
@@ -20,7 +21,7 @@ export interface DiceRef {
 
 const Dice = forwardRef<DiceRef, DiceProps>(
     (
-        { id = "dice", onRoll, className = "", disabled = false, size = "md" },
+        { id = "dice", onRoll, className = "", disabled = false, size = "md", speed = 1200 },
         ref
     ) => {
         const [currentRoll, setCurrentRoll] = useState<number>(1);
@@ -43,9 +44,9 @@ const Dice = forwardRef<DiceRef, DiceProps>(
 
                 setTimeout(() => {
                     setIsRolling(false);
-                }, 1200);
+                }, speed);
             },
-            [isRolling, onRoll, disabled]
+            [isRolling, onRoll, disabled, speed]
         );
 
         const rollToValue = useCallback(
@@ -152,10 +153,7 @@ const Dice = forwardRef<DiceRef, DiceProps>(
                                 transformStyle: "preserve-3d",
                                 margin: 0,
                                 padding: 0,
-                                transition:
-                                    rollCount % 2 === 0
-                                        ? "transform 1.2s ease-out"
-                                        : "transform 1.05s ease-out",
+                                transition: `transform ${speed / 1000}s ease-out`,
                                 transform: getRollTransform(
                                     currentRoll,
                                     rollCount % 2 === 0

@@ -5,9 +5,10 @@ interface GameBoardProps {
     gameState: GameState;
     recentlyPurchasedId: number | null;
     recentlyBuiltId: number | null;
+    inspectProperty: (propertyId: number) => void;
 }
 
-const GameBoard: React.FC<GameBoardProps> = ({ gameState, recentlyPurchasedId, recentlyBuiltId }) => {
+const GameBoard: React.FC<GameBoardProps> = ({ gameState, recentlyPurchasedId, recentlyBuiltId, inspectProperty }) => {
     const squares = [
         { name: "GO", type: "go" },
         { name: "Virtual Plaza", type: "property", group: "brown" },
@@ -80,6 +81,11 @@ const GameBoard: React.FC<GameBoardProps> = ({ gameState, recentlyPurchasedId, r
                             boxShadow: owner
                                 ? `inset 0 0 0 4px ${owner.color}`
                                 : "none",
+                        }}
+                        onClick={() => {
+                            if (square.type === 'property' || square.type === 'railroad' || square.type === 'utility') {
+                                inspectProperty(index);
+                            }
                         }}
                     >
                         <AnimatePresence>

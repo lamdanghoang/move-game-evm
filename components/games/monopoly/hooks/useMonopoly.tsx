@@ -55,6 +55,9 @@ const useMonopoly = () => {
     const [gameState, setGameState] = useState<GameState | null>(null);
     const [modalProperty, setModalProperty] = useState<Property | null>(null);
     const [modalCard, setModalCard] = useState<Card | null>(null);
+    const [inspectedProperty, setInspectedProperty] = useState<Property | null>(
+        null
+    );
     const [hasRolled, setHasRolled] = useState(false);
     const [animation, setAnimation] = useState<{
         playerId: number;
@@ -80,6 +83,43 @@ const useMonopoly = () => {
     const closeModal = () => {
         setModalProperty(null);
         setModalCard(null);
+    };
+
+    const inspectProperty = (propertyId: number) => {
+        if (!gameState) return;
+        const property = gameState.properties[propertyId];
+        const railroad = gameState.railroads[propertyId];
+        const utility = gameState.utilities[propertyId];
+
+        if (property) {
+            setInspectedProperty(property);
+        } else if (railroad) {
+            const railroadProperty: Property = {
+                name: railroad.name,
+                price: railroad.price,
+                owner: railroad.owner,
+                group: "railroad",
+                rent: [25, 50, 100, 200],
+                houses: 0,
+                housePrice: 0,
+            };
+            setInspectedProperty(railroadProperty);
+        } else if (utility) {
+            const utilityProperty: Property = {
+                name: utility.name,
+                price: utility.price,
+                owner: utility.owner,
+                group: "utility",
+                rent: [],
+                houses: 0,
+                housePrice: 0,
+            };
+            setInspectedProperty(utilityProperty);
+        }
+    };
+
+    const closeInspectModal = () => {
+        setInspectedProperty(null);
     };
 
     useEffect(() => {
@@ -637,11 +677,13 @@ const useMonopoly = () => {
         const total = dice1 + dice2;
         const isDouble = dice1 === dice2;
 
-        addLog(
-            `${currentPlayer.name} rolled a ${total} (${dice1} + ${dice2})${
-                isDouble ? " (double)" : ""
-            }`
-        );
+        setTimeout(() => {
+            addLog(
+                `${currentPlayer.name} rolled a ${total} (${dice1} + ${dice2})${
+                    isDouble ? " (double)" : ""
+                }`
+            );
+        }, 1000);
 
         setGameState((prev) => ({
             ...prev!,
@@ -650,9 +692,11 @@ const useMonopoly = () => {
         }));
 
         if (isDouble && gameState!.doubleRollCount >= 2) {
-            addLog(
-                `${currentPlayer.name} rolled three doubles in a row and went to jail!`
-            );
+            setTimeout(() => {
+                addLog(
+                    `${currentPlayer.name} rolled three doubles in a row and went to jail!`
+                );
+            }, 1000);
             setGameState((prev) => ({
                 ...prev!,
                 players: prev!.players.map((p) =>
@@ -700,18 +744,24 @@ const useMonopoly = () => {
 
         const isDouble = dice1 === dice2;
 
-        addLog(
-            `${currentPlayer.name} is in jail and rolled a ${dice1} + ${dice2}${
-                isDouble ? " (double)" : ""
-            }`
-        );
+        setTimeout(() => {
+            addLog(
+                `${
+                    currentPlayer.name
+                } is in jail and rolled a ${dice1} + ${dice2}${
+                    isDouble ? " (double)" : ""
+                }`
+            );
+        }, 1000);
 
         setGameState((prev) => ({ ...prev!, lastRoll: [dice1, dice2] }));
 
         if (isDouble) {
-            addLog(
-                `${currentPlayer.name} rolled a double and got out of jail!`
-            );
+            setTimeout(() => {
+                addLog(
+                    `${currentPlayer.name} rolled a double and got out of jail!`
+                );
+            }, 1000);
 
             setGameState((prev) => ({
                 ...prev!,
@@ -734,9 +784,11 @@ const useMonopoly = () => {
             }));
 
             if (currentPlayer.jailTurns >= 2) {
-                addLog(
-                    `${currentPlayer.name} did not roll a double for 3 turns and paid 50 credits to get out of jail.`
-                );
+                setTimeout(() => {
+                    addLog(
+                        `${currentPlayer.name} did not roll a double for 3 turns and paid 50 credits to get out of jail.`
+                    );
+                }, 1000);
 
                 subtractMoney(currentPlayer.id, 50);
 
@@ -909,13 +961,41 @@ const useMonopoly = () => {
             case "property":
             case "railroad":
             case "utility":
-                const property =
-                    gameState!.properties[position] ||
-                    gameState!.railroads[position] ||
-                    gameState!.utilities[position];
-                if (property && !property.owner) {
-                    setModalProperty(property);
-                } else if (property && property.owner !== player.id) {
+                const actualProperty = gameState!.properties[position];
+                const actualRailroad = gameState!.railroads[position];
+                const actualUtility = gameState!.utilities[position];
+
+                let modalProp: Property | null = null;
+
+                if (actualProperty) {
+                    modalProp = actualProperty;
+                } else if (actualRailroad) {
+                    // Create the full Property structure for Railroad
+                    modalProp = {
+                        name: actualRailroad.name,
+                        price: actualRailroad.price,
+                        owner: actualRailroad.owner,
+                        group: "railroad",
+                        rent: [25, 50, 100, 200], // Example rents
+                        houses: 0,
+                        housePrice: 0,
+                    };
+                } else if (actualUtility) {
+                    // Create the full Property structure for Utility
+                    modalProp = {
+                        name: actualUtility.name,
+                        price: actualUtility.price,
+                        owner: actualUtility.owner,
+                        group: "utility",
+                        rent: [], // Rent is special for Utilities, so an empty array is fine
+                        houses: 0,
+                        housePrice: 0,
+                    };
+                }
+
+                if (modalProp && !modalProp.owner) {
+                    setModalProperty(modalProp); // Pass the new, full Property object
+                } else if (modalProp && modalProp.owner !== player.id) {
                     payRent(player.id, position);
                 }
                 break;
@@ -1143,6 +1223,9 @@ const useMonopoly = () => {
         recentlyPurchasedId,
         recentlyBuiltId,
         buildingPropertyId,
+        inspectedProperty,
+        inspectProperty,
+        closeInspectModal,
     };
 };
 

@@ -5,73 +5,117 @@ interface ModalsProps {
     property: Property | null;
     card: Card | null;
     onClose: () => void;
+    onBuyProperty?: () => void;
 }
 
-const Modals: React.FC<ModalsProps> = ({ property, card, onClose }) => {
+const Modals: React.FC<ModalsProps> = ({
+    property,
+    card,
+    onClose,
+    onBuyProperty,
+}) => {
     if (!property && !card) return null;
 
     return (
-        <div className="fixed top-0 left-0 bg-black/80 items-center justify-center z-100">
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+            onClick={onClose}
+        >
             {property && (
-                <div className={`modalContent propertyCard`}>
-                    <div className="propertyHeader">
+                <div className="max-w-100 w-9/10 bg-neutral-800 border border-neutral-500 rounded-lg">
+                    <div className="flex justify-between items-center p-4 border-b border-b-zinc-500/30">
                         <h3 className="text-xl font-semibold">
                             {property.name}
                         </h3>
-                        <button className="closeBtn" onClick={onClose}>
+                        <button
+                            className="border-0 bg-transparent text-white text-2xl cursor-pointer p-0 size-6 flex items-center justify-center"
+                            onClick={onClose}
+                        >
                             &times;
                         </button>
                     </div>
-                    <div className="propertyBody">
+                    <div className="p-4 flex flex-col gap-4">
                         <div className="text-cyan-500 text-base/normal font-semibold">
                             Price: {property.price}
                         </div>
-                        <div className="rentStructure">
+                        <div className="flex flex-col gap-2">
                             <h4 className="text-lg font-semibold">
                                 Rent Structure:
                             </h4>
-                            <div className="flex flex-col gap-4">
-                                {property.rent && property.rent.map((rent, index) => (
-                                    <div
-                                        key={index}
-                                        className="flex items-center justify-between text-xs/normal"
-                                    >
-                                        <span>
-                                            {index === 0
-                                                ? "Base Rent"
-                                                : `With ${index} House${
-                                                      index > 1 ? "s" : ""
-                                                  }`}
-                                        </span>
-                                        <span>{rent}</span>
-                                    </div>
-                                ))}
-                            </div>
+                            {property.group === "utility" ? (
+                                <div className="text-xs/normal">
+                                    If one utility is owned, rent is 4 times
+                                    amount shown on dice. If both are owned,
+                                    rent is 10 times amount shown on dice.
+                                </div>
+                            ) : (
+                                <div className="flex flex-col gap-1">
+                                    {property.rent &&
+                                        property.rent.map((rent, index) => (
+                                            <div
+                                                key={index}
+                                                className="flex items-center justify-between text-xs/normal"
+                                            >
+                                                <span>
+                                                    {property.group ===
+                                                    "railroad"
+                                                        ? `With ${
+                                                              index + 1
+                                                          } Railroad${
+                                                              index > 0
+                                                                  ? "s"
+                                                                  : ""
+                                                          }`
+                                                        : index === 0
+                                                        ? "Base Rent"
+                                                        : index === 5
+                                                        ? "With Hotel"
+                                                        : `With ${index} House${
+                                                              index > 1
+                                                                  ? "s"
+                                                                  : ""
+                                                          }`}
+                                                </span>
+                                                <span>{rent}</span>
+                                            </div>
+                                        ))}
+                                </div>
+                            )}
                         </div>
-                        <div className="propertyActions">
-                            <Button>Buy Property</Button>
-                            <Button onClick={onClose}>Cancel</Button>
+                        <div className="flex justify-end gap-2">
+                            <Button onClick={onBuyProperty}>
+                                Buy Property
+                            </Button>
+                            <Button
+                                onClick={onClose}
+                                className="border border-neutral-500 bg-neutral-500/25 text-white hover:bg-neutral-400/25"
+                            >
+                                Cancel
+                            </Button>
                         </div>
                     </div>
                 </div>
             )}
             {card && (
-                <div className={`modalContent gameCard`}>
-                    <div className="cardHeader">
-                        <h3>
+                <div className="max-w-100 w-9/10 bg-neutral-800 border border-neutral-500 rounded-lg">
+                    <div className="flex justify-between items-center p-4 border-b border-b-zinc-500/30">
+                        <h3 className="text-xl font-semibold">
                             {card.action.includes("chance")
                                 ? "Chance Card"
                                 : "Community Chest"}
                         </h3>
-                        <button className="closeBtn" onClick={onClose}>
+                        <button
+                            className="border-0 bg-transparent text-white text-2xl cursor-pointer p-0 size-6 flex items-center justify-center"
+                            onClick={onClose}
+                        >
                             &times;
                         </button>
                     </div>
-                    <div className="cardBody">
-                        <div className="cardText">{card.text}</div>
-                        <button className="btn" onClick={onClose}>
+                    <div className="p-4 flex flex-col gap-4">
+                        <div className="text-base text-center">{card.text}</div>
+                        <Button onClick={onClose} className="mx-auto min-w-30">
                             Continue
-                        </button>
+                        </Button>
                     </div>
                 </div>
             )}

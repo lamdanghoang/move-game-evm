@@ -52,8 +52,8 @@ const Controls: React.FC<ControlsProps> = ({
 
             <div className="flex flex-col gap-3 items-center">
                 <div className="flex items-center gap-3">
-                    <Dice ref={dice1Ref} size="xs" />
-                    <Dice ref={dice2Ref} size="xs" />
+                    <Dice ref={dice1Ref} size="xs" speed={800} />
+                    <Dice ref={dice2Ref} size="xs" speed={800} />
                 </div>
                 {inJail ? (
                     <div className="flex flex-col gap-2 items-center">
@@ -86,7 +86,9 @@ const Controls: React.FC<ControlsProps> = ({
                             {lastRoll[0] + lastRoll[1]}
                         </div>
                         <div className="flex gap-2">
-                            <Button onClick={onBuyProperty}>Buy Property</Button>
+                            <Button onClick={onBuyProperty}>
+                                Buy Property
+                            </Button>
                             <Button onClick={onEndTurn} disabled={!hasRolled}>
                                 End Turn
                             </Button>
