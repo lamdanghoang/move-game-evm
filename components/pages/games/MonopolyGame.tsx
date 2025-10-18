@@ -60,14 +60,13 @@ const MonopolyGame = () => {
     return (
         <div className="grid grid-cols-[300px_1fr_300px] h-screen gap-4 p-4 max-w-[1600px] mx-auto my-0">
             <div className="flex flex-col gap-4 overflow-y-auto h-screen scroll-hide">
-                {gameState.players.map((player) => (
+                {currentPlayer && (
                     <PlayerStats
-                        key={player.id}
-                        player={player}
+                        players={gameState.players}
+                        currentPlayerIndex={gameState.players.findIndex(p => p.id === currentPlayer.id)}
                         onTrade={() => setIsTradeModalOpen(true)}
-                        isCurrentPlayer={player.id === currentPlayer?.id}
                     />
-                ))}
+                )}
                 <FactionStatus />
                 {currentPlayer && (
                     <PropertyPortfolio

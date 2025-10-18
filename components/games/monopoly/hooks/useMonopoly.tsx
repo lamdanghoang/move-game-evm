@@ -852,7 +852,7 @@ const useMonopoly = () => {
 
     useEffect(() => {
         if (recentlyPurchasedId) {
-            const timer = setTimeout(() => setRecentlyPurchasedId(null), 3000);
+            const timer = setTimeout(() => setRecentlyPurchasedId(null), 600);
             return () => clearTimeout(timer);
         }
     }, [recentlyPurchasedId]);
