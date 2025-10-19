@@ -611,19 +611,18 @@ app.prepare().then(() => {
     io.on("connection", (socket) => {
         console.log("A user connected:", socket.id);
 
-        socket.on("create_game", async ({ name }) => {
+        socket.on("create_game", async ({ roomName, address }) => {
             const roomCode = generateRoomId();
             const initialGameState = getInitialGameState();
             const newPlayer = {
-                id: socket.id,
-                name: name || "Player 1",
+                id: address,
+                name: "Player 1",
                 color: "#00ff88",
                 money: 1500,
                 position: 0,
                 properties: [],
                 inJail: false,
                 jailTurns: 0,
-                socketId: socket.id,
                 bankrupt: false,
             };
             initialGameState.players.push(newPlayer);
@@ -634,7 +633,13 @@ app.prepare().then(() => {
 
             const { data: room, error } = await supabase
                 .from("rooms")
-                .insert([{ room_code: roomCode, game_state: initialGameState }])
+                .insert([
+                    {
+                        room_code: roomCode,
+                        room_name: roomName,
+                        game_state: initialGameState,
+                    },
+                ])
                 .select();
 
             if (error) {
@@ -644,12 +649,12 @@ app.prepare().then(() => {
             }
 
             const roomId = room[0].id;
-            roomPlayers.set(roomId, [socket.id]);
+            roomPlayers.set(roomId, [address]);
 
             const { error: playerError } = await supabase
                 .from("room_players")
                 .insert([
-                    { room_id: roomId, user_id: socket.id, player_order: 1 },
+                    { room_id: roomId, user_id: address, player_order: 1 },
                 ]);
 
             if (playerError) {
@@ -661,88 +666,97 @@ app.prepare().then(() => {
             socket.join(roomId);
             socket.emit("game_created", {
                 roomId,
-                gameState: initialGameState,
             });
         });
 
-        // socket.on("join_game", async ({ roomId, name }) => {
-        //     const { data: room, error } = await supabase
-        //         .from("rooms")
-        //         .select("*, room_players(*)")
-        //         .eq("id", roomId)
-        //         .single();
+        socket.on("join_game", async ({ roomId, address }) => {
+            const { data: room, error } = await supabase
+                .from("rooms")
+                .select("*, room_players(*)")
+                .eq("id", roomId)
+                .single();
 
-        //     if (error || !room) {
-        //         return socket.emit("error", { message: "Game not found." });
-        //     }
+            if (error || !room) {
+                return socket.emit("error", { message: "Game not found." });
+            }
 
-        //     const playersInRoom = roomPlayers.get(roomId) || [];
-        //     const playerExists = playersInRoom.includes(socket.id);
+            const playersInRoom = roomPlayers.get(roomId) || [];
+            const playerExists = playersInRoom.includes(address);
 
-        //     if (!playerExists) {
-        //         if (playersInRoom.length >= 4) {
-        //             return socket.emit("error", {
-        //                 message: "This game is full.",
-        //             });
-        //         }
+            if (!playerExists) {
+                if (playersInRoom.length >= 4) {
+                    return socket.emit("error", {
+                        message: "This game is full.",
+                    });
+                }
 
-        //         const playerColors = [
-        //             "#00ff88",
-        //             "#ff0088",
-        //             "#8800ff",
-        //             "#ff8800",
-        //         ];
-        //         const newPlayer = {
-        //             id: socket.id,
-        //             name: name || `Player ${room.room_players.length + 1}`,
-        //             color: playerColors[room.room_players.length],
-        //             money: 1500,
-        //             position: 0,
-        //             properties: [],
-        //             inJail: false,
-        //             jailTurns: 0,
-        //             socketId: socket.id,
-        //             bankrupt: false,
-        //         };
+                const playerColors = [
+                    "#00ff88",
+                    "#ff0088",
+                    "#8800ff",
+                    "#ff8800",
+                ];
+                const newPlayer = {
+                    id: address,
+                    name: `Player ${room.room_players.length + 1}`,
+                    color: playerColors[room.room_players.length],
+                    money: 1500,
+                    position: 0,
+                    properties: [],
+                    inJail: false,
+                    jailTurns: 0,
+                    bankrupt: false,
+                };
 
-        //         const gameState = room.game_state;
-        //         gameState.players.push(newPlayer);
-        //         gameState.gameLog.push({
-        //             time: new Date().toLocaleTimeString(),
-        //             text: `${newPlayer.name} has joined the game.`,
-        //         });
+                const gameState = room.game_state;
+                gameState.players.push(newPlayer);
+                gameState.gameLog.push({
+                    time: new Date().toLocaleTimeString(),
+                    text: `${newPlayer.name} has joined the game.`,
+                });
 
-        //         const { error: updateError } = await supabase
-        //             .from("rooms")
-        //             .update({ game_state: gameState })
-        //             .eq("id", roomId);
+                const { error: updateError, data: updatedRoom } = await supabase
+                    .from("rooms")
+                    .update({ game_state: gameState })
+                    .eq("id", roomId)
+                    .select();
 
-        //         if (updateError) {
-        //             return socket.emit("error", {
-        //                 message: "Could not update game state.",
-        //             });
-        //         }
+                if (updateError) {
+                    return socket.emit("error", {
+                        message: "Could not update game state.",
+                    });
+                }
 
-        //         const { error: playerError } = await supabase
-        //             .from("room_players")
-        //             .insert([
-        //                 {
-        //                     room_id: roomId,
-        //                     user_id: socket.id,
-        //                     player_order: room.room_players.length + 1,
-        //                 },
-        //             ]);
+                room.game_state = updatedRoom[0].game_state;
 
-        //         if (playerError) {
-        //             return socket.emit("error", {
-        //                 message: "Could not add player to game.",
-        //             });
-        //         }
-        //         roomPlayers.set(roomId, [...playersInRoom, socket.id]);
-        //     }
+                const { error: playerError } = await supabase
+                    .from("room_players")
+                    .insert([
+                        {
+                            room_id: roomId,
+                            user_id: address,
+                            player_order: room.room_players.length + 1,
+                        },
+                    ]);
 
-        //     socket.join(roomId);
-        // });
+                if (playerError) {
+                    return socket.emit("error", {
+                        message: "Could not add player to game.",
+                    });
+                }
+                roomPlayers.set(roomId, [...playersInRoom, address]);
+
+                io.to(roomId).emit("game_updated", {
+                    gameState: room.game_state,
+                });
+            } else {
+                socket.join(roomId);
+
+                socket.emit("game_updated", { gameState: room.game_state });
+            }
+
+            socket.join(roomId);
+        });
 
         // socket.on("player_action", async ({ roomId, action }) => {
         //     const playersInRoom = roomPlayers.get(roomId) || [];

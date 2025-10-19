@@ -80,6 +80,7 @@ export interface GameEvent {
 export interface Room {
     id: string; // uuid from Supabase
     room_code: string;
+    room_name: string;
     game_state: GameState; // jsonb
     status: "waiting" | "playing" | "finished" | string;
     max_players: number;

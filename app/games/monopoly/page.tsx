@@ -9,11 +9,13 @@ import CreateRoomModal from "@/components/games/monopoly/CreateRoomModal";
 import { supabase } from "@/lib/supabaseClient";
 import { socket } from "@/lib/socketClient";
 import { Room } from "@/types";
+import { useAccount } from "wagmi";
 
 const MonopolyLobby = () => {
     const router = useRouter();
     const [rooms, setRooms] = useState<Room[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const { address } = useAccount();
 
     useEffect(() => {
         const fetchRooms = async () => {
@@ -43,8 +45,23 @@ const MonopolyLobby = () => {
         };
     }, []);
 
-    const handleCreateRoom = (playerName: string) => {
-        socket.emit("create_game", { name: playerName });
+    useEffect(() => {
+        socket.on("game_created", ({ roomId }) => {
+            handleJoinRoom(roomId);
+        });
+
+        return () => {
+            socket.off("game_created");
+        };
+    }, []);
+
+    const handleCreateRoom = (roomName: string) => {
+        if (!address) return;
+
+        socket.emit("create_game", {
+            roomName,
+            address,
+        });
         setIsModalOpen(false);
     };
 
@@ -78,7 +95,7 @@ const MonopolyLobby = () => {
                             >
                                 <CardHeader>
                                     <CardTitle className="flex justify-between items-center">
-                                        <span>{room.room_code}</span>
+                                        <span>{room.room_name}</span>
                                         {room.status === "featured" && (
                                             <span className="text-xs bg-primary text-white px-2 py-1 rounded-full">
                                                 Featured
