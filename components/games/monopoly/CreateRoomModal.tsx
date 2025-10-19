@@ -12,7 +12,11 @@ interface CreateRoomModalProps {
     onCreateRoom: (roomName: string) => void;
 }
 
-const CreateRoomModal = ({ isOpen, onClose, onCreateRoom }: CreateRoomModalProps) => {
+const CreateRoomModal = ({
+    isOpen,
+    onClose,
+    onCreateRoom,
+}: CreateRoomModalProps) => {
     const [roomName, setRoomName] = useState("");
 
     const handleCreate = () => {

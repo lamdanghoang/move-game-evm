@@ -76,3 +76,13 @@ export interface GameEvent {
     time: string;
     text: string;
 }
+
+export interface Room {
+    id: string; // uuid from Supabase
+    room_code: string;
+    game_state: GameState; // jsonb
+    status: "waiting" | "playing" | "finished" | string;
+    max_players: number;
+    created_at: string; // ISO timestamp
+    updated_at: string;
+}
