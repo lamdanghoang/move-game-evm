@@ -8,6 +8,7 @@ export interface Player {
     inJail: boolean;
     jailTurns: number;
     bankrupt: boolean;
+    getOutOfJailFreeCards: number;
 }
 
 export interface Property {
@@ -15,7 +16,7 @@ export interface Property {
     group: string;
     price: number;
     rent: number[];
-    owner: number | null;
+    owner: string | null;
     houses: number;
     housePrice: number;
 }
@@ -23,20 +24,26 @@ export interface Property {
 export interface Railroad {
     name: string;
     price: number;
-    owner: number | null;
+    owner: string | null;
 }
 
 export interface Utility {
     name: string;
     price: number;
-    owner: number | null;
+    owner: string | null;
 }
 
 export interface Card {
     text: string;
-    action: string;
-    amount?: number;
-    position?: number;
+    cardType: "chance" | "community_chest";
+    action: {
+        type: string;
+        position?: number;
+        group?: string;
+        amount?: number;
+        house?: number;
+        hotel?: number;
+    };
 }
 
 export interface Square {
@@ -57,6 +64,12 @@ export interface GameState {
     doubleRollCount: number;
     lastRoll: [number, number];
     hasRolled: boolean;
+    auction: {
+        propertyId: number;
+        highestBid: number;
+        highestBidder: string | null;
+        timer: number;
+    } | null;
     properties: { [key: number]: Property };
     railroads: { [key: number]: Railroad };
     utilities: { [key: number]: Utility };

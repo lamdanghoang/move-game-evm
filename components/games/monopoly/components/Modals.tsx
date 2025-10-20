@@ -100,7 +100,7 @@ const Modals: React.FC<ModalsProps> = ({
                 <div className="max-w-100 w-9/10 bg-neutral-800 border border-neutral-500 rounded-lg">
                     <div className="flex justify-between items-center p-4 border-b border-b-zinc-500/30">
                         <h3 className="text-xl font-semibold">
-                            {card.action.includes("chance")
+                            {card.cardType === "chance"
                                 ? "Chance Card"
                                 : "Community Chest"}
                         </h3>
