@@ -79,8 +79,8 @@ export interface GameState {
 }
 
 export interface TradeDetails {
-    fromPlayerId: number;
-    toPlayerId: number;
+    fromPlayerId: string;
+    toPlayerId: string;
     offeredProperties: number[];
     requestedProperties: number[];
     offeredMoney: number;

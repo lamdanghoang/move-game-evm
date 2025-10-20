@@ -22,7 +22,7 @@ const TradeModal = ({
     onTrade,
     currentPlayer,
 }: TradeModalProps) => {
-    const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(
+    const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(
         null
     );
     const [offeredProperties, setOfferedProperties] = useState<number[]>([]);
@@ -129,9 +129,7 @@ const TradeModal = ({
                             </h4>
                             <select
                                 onChange={(e) =>
-                                    setSelectedPlayerId(
-                                        parseInt(e.target.value)
-                                    )
+                                    setSelectedPlayerId(e.target.value)
                                 }
                                 className="bg-neutral-700 p-2 rounded"
                             >

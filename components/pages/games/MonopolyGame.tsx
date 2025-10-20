@@ -6,7 +6,7 @@ import PlayerStats from "../../games/monopoly/components/PlayerStats";
 import Chat from "../../games/monopoly/components/Chat";
 import Controls from "../../games/monopoly/components/Controls";
 import Modals from "../../games/monopoly/components/Modals";
-import { GameState, Player, Property, TradeDetails } from "@/types";
+import { Card, GameState, Player, Property, TradeDetails } from "@/types";
 import FactionStatus from "@/components/games/monopoly/components/FactionStatus";
 import PropertyPortfolio from "@/components/games/monopoly/components/PropertyPortfolio";
 import StoryEvents from "@/components/games/monopoly/components/StoryEvent";
@@ -28,7 +28,7 @@ const MonopolyGame = ({
     const { id: roomId } = params;
     const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
     const [modalProperty, setModalProperty] = useState<Property | null>(null);
-    const [modalCard, setModalCard] = useState<any | null>(null);
+    const [modalCard, setModalCard] = useState<Card | null>(null);
     const [inspectedProperty, setInspectedProperty] = useState<Property | null>(
         null
     );
@@ -129,8 +129,7 @@ const MonopolyGame = ({
         return <div className="my-20 text-center">Loading...</div>;
     }
 
-    const currentPlayer =
-        gameState.players[gameState.currentPlayerIndex];
+    const currentPlayer = gameState.players[gameState.currentPlayerIndex];
 
     const onBuyProperty = () => {
         handleBuyProperty();
