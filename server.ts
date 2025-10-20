@@ -15,7 +15,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 const dev = process.env.NODE_ENV !== "production";
 const app = next({ dev });
 const handle = app.getRequestHandler();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 10000;
 
 const roomPlayers = new Map<string, string[]>();
 
@@ -679,6 +679,9 @@ app.prepare().then(() => {
     io.on("connection", (socket: Socket) => {
         console.log("A user connected:", socket.id);
 
+        socket.emit("welcome", { message: "Hello from server!" });
+        io.emit("broadcast", { message: "Someone joined!" });
+
         socket.on(
             "create_game",
             async ({
@@ -688,6 +691,10 @@ app.prepare().then(() => {
                 roomName: string;
                 address: string;
             }) => {
+                console.log("Received create_game event with:", {
+                    roomName,
+                    address,
+                });
                 const roomCode = generateRoomId();
                 const initialGameState = getInitialGameState();
                 const newPlayer: Player = {
@@ -713,15 +720,17 @@ app.prepare().then(() => {
                         {
                             room_code: roomCode,
                             room_name: roomName,
-                            game_state: initialGameState as any,
+                            game_state: initialGameState as GameState,
                         },
                     ])
                     .select();
                 if (error) {
+                    console.error("Error creating game in Supabase:", error);
                     return socket.emit("error", {
                         message: "Could not create game.",
                     });
                 }
+                console.log("Game created successfully in Supabase:", room);
                 const roomId = room[0].id;
                 roomPlayers.set(roomId, [address]);
                 const { error: playerError } = await supabase
@@ -730,11 +739,16 @@ app.prepare().then(() => {
                         { room_id: roomId, user_id: address, player_order: 1 },
                     ]);
                 if (playerError) {
+                    console.error(
+                        "Error adding player to room_players:",
+                        playerError
+                    );
                     return socket.emit("error", {
                         message: "Could not add player to game.",
                     });
                 }
                 socket.join(roomId);
+                console.log(`Emitting game_created for room ${roomId}`);
                 socket.emit("game_created", {
                     roomId,
                 });
