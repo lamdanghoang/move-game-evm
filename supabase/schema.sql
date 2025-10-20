@@ -19,7 +19,8 @@ CREATE TABLE room_players (
     user_id text NOT NULL,
     player_order integer NOT NULL,
     is_ready boolean DEFAULT false,
-    created_at timestamptz DEFAULT now()
+    created_at timestamptz DEFAULT now(),
+    UNIQUE(room_id, user_id)
 );
 
 --- Enable RLS for the room_players table

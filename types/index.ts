@@ -1,5 +1,5 @@
 export interface Player {
-    id: number;
+    id: string;
     name: string;
     color: string;
     money: number;
@@ -7,6 +7,7 @@ export interface Player {
     properties: number[];
     inJail: boolean;
     jailTurns: number;
+    bankrupt: boolean;
 }
 
 export interface Property {
@@ -55,6 +56,7 @@ export interface GameState {
     totalTransactions: number;
     doubleRollCount: number;
     lastRoll: [number, number];
+    hasRolled: boolean;
     properties: { [key: number]: Property };
     railroads: { [key: number]: Railroad };
     utilities: { [key: number]: Utility };

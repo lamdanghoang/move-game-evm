@@ -1,13 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import useMonopoly from "../../games/monopoly/hooks/useMonopoly";
 import GameBoard from "../../games/monopoly/components/GameBoard";
 import PlayerStats from "../../games/monopoly/components/PlayerStats";
 import Chat from "../../games/monopoly/components/Chat";
 import Controls from "../../games/monopoly/components/Controls";
 import Modals from "../../games/monopoly/components/Modals";
-import { Card, Player, Property, TradeDetails } from "@/types";
+import { GameState, Player, Property, TradeDetails } from "@/types";
 import FactionStatus from "@/components/games/monopoly/components/FactionStatus";
 import PropertyPortfolio from "@/components/games/monopoly/components/PropertyPortfolio";
 import StoryEvents from "@/components/games/monopoly/components/StoryEvent";
@@ -15,37 +14,123 @@ import GameAnalytics from "@/components/games/monopoly/components/GameAnalytics"
 import TradeModal from "../../games/monopoly/components/TradeModal";
 import { motion, AnimatePresence } from "framer-motion";
 import GameLog from "../../games/monopoly/components/GameLog";
+import { socket } from "@/lib/socketClient";
+import { useParams } from "next/navigation";
 
-const MonopolyGame = () => {
-    const {
-        gameState,
-        getCurrentPlayer,
-        squares,
-        hasRolled,
-        handleRollDice,
-        handleEndTurn,
-        handleBuyProperty,
-        handleBuyHouse,
-        handleTrade,
-        modalProperty,
-        modalCard,
-        closeModal,
-        handlePayJailFine,
-        useGetOutOfJailCard,
-        recentlyPurchasedId,
-        recentlyBuiltId,
-        buildingPropertyId,
-        inspectedProperty,
-        inspectProperty,
-        closeInspectModal,
-    } = useMonopoly();
+const MonopolyGame = ({
+    gameState,
+    player,
+}: {
+    gameState: GameState;
+    player: Player | undefined;
+}) => {
+    const params = useParams();
+    const { id: roomId } = params;
     const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
+    const [modalProperty, setModalProperty] = useState<Property | null>(null);
+    const [modalCard, setModalCard] = useState<any | null>(null);
+    const [inspectedProperty, setInspectedProperty] = useState<Property | null>(
+        null
+    );
+    const [recentlyPurchasedId, setRecentlyPurchasedId] = useState<
+        number | null
+    >(null);
+    const [recentlyBuiltId, setRecentlyBuiltId] = useState<number | null>(null);
+    const [buildingPropertyId, setBuildingPropertyId] = useState<number | null>(
+        null
+    );
 
-    if (!gameState) {
+    const handleRollDice = () => {
+        socket.emit("player_action", { roomId, action: { type: "ROLL_DICE" } });
+    };
+
+    const handleEndTurn = () => {
+        socket.emit("player_action", { roomId, action: { type: "END_TURN" } });
+    };
+
+    const handleBuyProperty = () => {
+        socket.emit("player_action", {
+            roomId,
+            action: { type: "BUY_PROPERTY" },
+        });
+    };
+
+    const handleBuyHouse = (propertyId: number) => {
+        socket.emit("player_action", {
+            roomId,
+            action: { type: "BUY_HOUSE", payload: { propertyId } },
+        });
+    };
+
+    const handleTrade = (tradeDetails: TradeDetails) => {
+        socket.emit("player_action", {
+            roomId,
+            action: { type: "TRADE", payload: tradeDetails },
+        });
+        setIsTradeModalOpen(false);
+    };
+
+    const handlePayJailFine = () => {
+        socket.emit("player_action", {
+            roomId,
+            action: { type: "PAY_JAIL_FINE" },
+        });
+    };
+
+    const useGetOutOfJailCard = () => {
+        socket.emit("player_action", {
+            roomId,
+            action: { type: "USE_JAIL_CARD" },
+        });
+    };
+
+    const inspectProperty = (propertyId: number) => {
+        const property = gameState.properties[propertyId];
+        const railroad = gameState.railroads[propertyId];
+        const utility = gameState.utilities[propertyId];
+
+        if (property) {
+            setInspectedProperty(property);
+        } else if (railroad) {
+            const railroadProperty: Property = {
+                name: railroad.name,
+                price: railroad.price,
+                owner: railroad.owner,
+                group: "railroad",
+                rent: [25, 50, 100, 200],
+                houses: 0,
+                housePrice: 0,
+            };
+            setInspectedProperty(railroadProperty);
+        } else if (utility) {
+            const utilityProperty: Property = {
+                name: utility.name,
+                price: utility.price,
+                owner: utility.owner,
+                group: "utility",
+                rent: [],
+                houses: 0,
+                housePrice: 0,
+            };
+            setInspectedProperty(utilityProperty);
+        }
+    };
+
+    const closeModal = () => {
+        setModalProperty(null);
+        setModalCard(null);
+    };
+
+    const closeInspectModal = () => {
+        setInspectedProperty(null);
+    };
+
+    if (!gameState || !player) {
         return <div className="my-20 text-center">Loading...</div>;
     }
 
-    const currentPlayer = getCurrentPlayer();
+    const currentPlayer =
+        gameState.players[gameState.currentPlayerIndex];
 
     const onBuyProperty = () => {
         handleBuyProperty();
@@ -63,7 +148,7 @@ const MonopolyGame = () => {
                 {currentPlayer && (
                     <PlayerStats
                         players={gameState.players}
-                        currentPlayerIndex={gameState.players.findIndex(p => p.id === currentPlayer.id)}
+                        currentPlayerIndex={gameState.currentPlayerIndex}
                         onTrade={() => setIsTradeModalOpen(true)}
                     />
                 )}
@@ -92,7 +177,7 @@ const MonopolyGame = () => {
                     onEndTurn={handleEndTurn}
                     onBuyProperty={handleBuyProperty}
                     lastRoll={gameState.lastRoll}
-                    hasRolled={hasRolled}
+                    hasRolled={gameState.hasRolled}
                     inJail={currentPlayer?.inJail || false}
                     onPayJailFine={handlePayJailFine}
                     onUseJailCard={useGetOutOfJailCard}
@@ -131,7 +216,7 @@ const MonopolyGame = () => {
                         if (buildingPropertyId !== null) {
                             const property =
                                 gameState.properties[buildingPropertyId];
-                            const player = getCurrentPlayer();
+                            const player = currentPlayer;
                             if (!property || !player) return null;
 
                             const isHotel = property.houses === 5;
