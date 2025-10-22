@@ -8,10 +8,13 @@ interface ControlsProps {
     onBuyProperty: () => void;
     onPayJailFine: () => void;
     onUseJailCard: () => void;
-    lastRoll: [number, number];
+    lastRoll: [number, number] | null;
     hasRolled: boolean;
     inJail: boolean;
     hasJailCard: boolean;
+    shouldAnimateDice: boolean;
+    onDiceAnimationComplete: () => void;
+    isCurrentPlayerTurn: boolean;
 }
 
 const Controls: React.FC<ControlsProps> = ({
@@ -24,23 +27,27 @@ const Controls: React.FC<ControlsProps> = ({
     hasRolled,
     inJail,
     hasJailCard,
+    shouldAnimateDice,
+    onDiceAnimationComplete,
+    isCurrentPlayerTurn,
 }) => {
     const dice1Ref = useRef<DiceRef>(null);
     const dice2Ref = useRef<DiceRef>(null);
 
     useEffect(() => {
-        if (lastRoll) {
+        if (lastRoll && shouldAnimateDice) {
             dice1Ref.current?.rollToValue(lastRoll[0]);
             dice2Ref.current?.rollToValue(lastRoll[1]);
+            onDiceAnimationComplete();
         }
-    }, [lastRoll]);
+    }, [lastRoll, shouldAnimateDice]);
     return (
         <div
             className="absolute col-start-2 col-span-9 row-start-2 row-span-9 flex flex-col items-center justify-center rounded-full text-center gap-3
             bg-radial from-cyan-500/10 from-0% to-transparent to-70%"
         >
             <div className="flex flex-col gap-1">
-                <h1 className="text-cyan-500 text-shadow-[0_0_20px_rgba(50_184_198_/_0.8)] text-xl font-semibold">
+                <h1 className="text-cyan-500 text-shadow-[0_0_20px_rgba(50_184_198/0.8)] text-xl font-semibold">
                     NEO
                     <br />
                     METROPOLIS
@@ -77,22 +84,21 @@ const Controls: React.FC<ControlsProps> = ({
                         <Button
                             className={`btn rollDiceBtn`}
                             onClick={onRollDice}
-                            disabled={hasRolled}
+                            disabled={!isCurrentPlayerTurn || hasRolled}
                         >
                             Roll Dice
                         </Button>
-                        <div className="text-xs/normal">
-                            Last Roll: {lastRoll[0]} + {lastRoll[1]} ={" "}
-                            {lastRoll[0] + lastRoll[1]}
-                        </div>
                         <div className="flex gap-2">
                             <Button onClick={onBuyProperty}>
                                 Buy Property
                             </Button>
-                            <Button onClick={onEndTurn} disabled={!hasRolled}>
+                            <Button
+                                onClick={onEndTurn}
+                                disabled={!isCurrentPlayerTurn || !hasRolled}
+                            >
                                 End Turn
                             </Button>
-                        </div>
+                        </div>{" "}
                     </>
                 )}
             </div>

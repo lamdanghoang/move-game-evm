@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import GameBoard from "../../games/monopoly/components/GameBoard";
 import PlayerStats from "../../games/monopoly/components/PlayerStats";
 import Chat from "../../games/monopoly/components/Chat";
@@ -16,17 +16,30 @@ import { motion, AnimatePresence } from "framer-motion";
 import GameLog from "../../games/monopoly/components/GameLog";
 import { socket } from "@/lib/socketClient";
 import { useParams } from "next/navigation";
+import { useAccount } from "wagmi";
 
 const MonopolyGame = ({
     gameState,
     player,
+    isAnimating,
+    setIsAnimating,
+    lastRollResult,
 }: {
     gameState: GameState;
     player: Player | undefined;
+    isAnimating: boolean;
+    setIsAnimating: (state: boolean) => void;
+    lastRollResult: [number, number] | null;
 }) => {
     const params = useParams();
     const { id: roomId } = params;
+    const { address } = useAccount();
     const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
+    const [shouldAnimateDice, setShouldAnimateDice] = useState(false);
+
+    const onDiceAnimationComplete = useCallback(() => {
+        setShouldAnimateDice(false);
+    }, []);
     const [modalProperty, setModalProperty] = useState<Property | null>(null);
     const [modalCard, setModalCard] = useState<Card | null>(null);
     const [inspectedProperty, setInspectedProperty] = useState<Property | null>(
@@ -39,19 +52,56 @@ const MonopolyGame = ({
     const [buildingPropertyId, setBuildingPropertyId] = useState<number | null>(
         null
     );
+    const [stagedPlayerPositions, setStagedPlayerPositions] = useState(
+        gameState.players.map((p) => ({ id: p.id, position: p.position }))
+    );
+    const [delayedGameLog, setDelayedGameLog] = useState(gameState.gameLog);
+
+    useEffect(() => {
+        const newPositions = gameState.players.map((p) => ({
+            id: p.id,
+            position: p.position,
+        }));
+
+        if (!isAnimating) {
+            setStagedPlayerPositions(newPositions);
+            setDelayedGameLog(gameState.gameLog);
+            return;
+        }
+
+        const delayTimer = setTimeout(() => {
+            setStagedPlayerPositions(newPositions);
+            setDelayedGameLog(gameState.gameLog);
+            setIsAnimating(false);
+        }, 1000);
+
+        return () => {
+            clearTimeout(delayTimer);
+        };
+    }, [gameState.gameLog]);
 
     const handleRollDice = () => {
-        socket.emit("player_action", { roomId, action: { type: "ROLL_DICE" } });
+        setShouldAnimateDice(true);
+        socket.emit("player_action", {
+            roomId,
+            action: { type: "ROLL_DICE" },
+            address,
+        });
     };
 
     const handleEndTurn = () => {
-        socket.emit("player_action", { roomId, action: { type: "END_TURN" } });
+        socket.emit("player_action", {
+            roomId,
+            action: { type: "END_TURN" },
+            address,
+        });
     };
 
     const handleBuyProperty = () => {
         socket.emit("player_action", {
             roomId,
             action: { type: "BUY_PROPERTY" },
+            address,
         });
     };
 
@@ -59,6 +109,7 @@ const MonopolyGame = ({
         socket.emit("player_action", {
             roomId,
             action: { type: "BUY_HOUSE", payload: { propertyId } },
+            address,
         });
     };
 
@@ -66,6 +117,7 @@ const MonopolyGame = ({
         socket.emit("player_action", {
             roomId,
             action: { type: "TRADE", payload: tradeDetails },
+            address,
         });
         setIsTradeModalOpen(false);
     };
@@ -74,6 +126,7 @@ const MonopolyGame = ({
         socket.emit("player_action", {
             roomId,
             action: { type: "PAY_JAIL_FINE" },
+            address,
         });
     };
 
@@ -81,6 +134,15 @@ const MonopolyGame = ({
         socket.emit("player_action", {
             roomId,
             action: { type: "USE_JAIL_CARD" },
+            address,
+        });
+    };
+
+    const handleStartGame = () => {
+        socket.emit("player_action", {
+            roomId,
+            action: { type: "START_GAME" },
+            address,
         });
     };
 
@@ -130,6 +192,7 @@ const MonopolyGame = ({
     }
 
     const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+    const isCurrentPlayerTurn = player?.id === currentPlayer.id;
 
     const onBuyProperty = () => {
         handleBuyProperty();
@@ -166,26 +229,76 @@ const MonopolyGame = ({
             </div>
             <div className="relative flex items-center justify-center p-4">
                 <GameBoard
-                    gameState={gameState}
+                    gameState={{
+                        ...gameState,
+                        players: gameState.players.map((player) => {
+                            const stagedPos = stagedPlayerPositions.find(
+                                (p) => p.id === player.id
+                            )?.position;
+                            return stagedPos !== undefined
+                                ? { ...player, position: stagedPos }
+                                : player;
+                        }),
+                    }}
                     recentlyPurchasedId={recentlyPurchasedId}
                     recentlyBuiltId={recentlyBuiltId}
                     inspectProperty={inspectProperty}
                 />
-                <Controls
-                    onRollDice={handleRollDice}
-                    onEndTurn={handleEndTurn}
-                    onBuyProperty={handleBuyProperty}
-                    lastRoll={gameState.lastRoll}
-                    hasRolled={gameState.hasRolled}
-                    inJail={currentPlayer?.inJail || false}
-                    onPayJailFine={handlePayJailFine}
-                    onUseJailCard={useGetOutOfJailCard}
-                    hasJailCard={false}
-                />
+                {!gameState.gameStarted ? (
+                    <div>
+                        {player?.id === gameState.players[0].id ? (
+                            <button
+                                onClick={handleStartGame}
+                                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-8 rounded-lg text-2xl z-10"
+                            >
+                                Start Game
+                            </button>
+                        ) : (
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-xl flex flex-col items-center gap-4">
+                                <svg
+                                    className="animate-spin h-8 w-8 text-white"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <circle
+                                        className="opacity-25"
+                                        cx="12"
+                                        cy="12"
+                                        r="10"
+                                        stroke="currentColor"
+                                        strokeWidth="4"
+                                    ></circle>
+                                    <path
+                                        className="opacity-75"
+                                        fill="currentColor"
+                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                    ></path>
+                                </svg>
+                                Waiting for host to start the game...
+                            </div>
+                        )}
+                    </div>
+                ) : (
+                    <Controls
+                        onRollDice={handleRollDice}
+                        onEndTurn={handleEndTurn}
+                        onBuyProperty={handleBuyProperty}
+                        lastRoll={lastRollResult}
+                        hasRolled={gameState.hasRolled}
+                        inJail={currentPlayer?.inJail || false}
+                        onPayJailFine={handlePayJailFine}
+                        onUseJailCard={useGetOutOfJailCard}
+                        hasJailCard={false}
+                        shouldAnimateDice={shouldAnimateDice}
+                        onDiceAnimationComplete={onDiceAnimationComplete}
+                        isCurrentPlayerTurn={isCurrentPlayerTurn}
+                    />
+                )}
             </div>
             <div className="flex flex-col gap-4 overflow-y-auto h-screen scroll-hide">
                 <Chat messages={[]} />
-                <GameLog events={gameState.gameLog} />
+                <GameLog events={delayedGameLog} />
                 <StoryEvents />
                 <GameAnalytics />
             </div>

@@ -8,7 +8,12 @@ interface GameBoardProps {
     inspectProperty: (propertyId: number) => void;
 }
 
-const GameBoard: React.FC<GameBoardProps> = ({ gameState, recentlyPurchasedId, recentlyBuiltId, inspectProperty }) => {
+const GameBoard: React.FC<GameBoardProps> = ({
+    gameState,
+    recentlyPurchasedId,
+    recentlyBuiltId,
+    inspectProperty,
+}) => {
     const squares = [
         { name: "GO", type: "go" },
         { name: "Virtual Plaza", type: "property", group: "brown" },
@@ -53,7 +58,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ gameState, recentlyPurchasedId, r
     ];
 
     return (
-        <div className="relative w-full h-full grid grid-cols-[repeat(11,_1fr)] grid-rows-[repeat(11,_1fr)] gap-0.5 bg-neutral-800 border-2 border-[rgba(50,184,198,1)] rounded-2xl">
+        <div className="relative w-full h-full grid grid-cols-[repeat(11,1fr)] grid-rows-[repeat(11,1fr)] gap-0.5 bg-neutral-800 border-2 border-[rgba(50,184,198,1)] rounded-2xl">
             {squares.map((square, index) => {
                 const property =
                     gameState.properties[index] ||
@@ -83,7 +88,11 @@ const GameBoard: React.FC<GameBoardProps> = ({ gameState, recentlyPurchasedId, r
                                 : "none",
                         }}
                         onClick={() => {
-                            if (square.type === 'property' || square.type === 'railroad' || square.type === 'utility') {
+                            if (
+                                square.type === "property" ||
+                                square.type === "railroad" ||
+                                square.type === "utility"
+                            ) {
                                 inspectProperty(index);
                             }
                         }}

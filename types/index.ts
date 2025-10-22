@@ -102,3 +102,101 @@ export interface Room {
     created_at: string; // ISO timestamp
     updated_at: string;
 }
+
+export interface RoomPlayer {
+    id: string; // uuid from Supabase
+    room_id: string;
+    user_id: string;
+    player_order: number;
+    is_ready: boolean;
+    created_at: string; // ISO timestamp
+}
+
+export interface GameMove {
+    id: number;
+    room_id: string;
+    user_id: string;
+    move_type: string;
+    move_data: any;
+    created_at: string; // ISO timestamp
+}
+
+// --- Player Actions ---
+
+export type ActionType =
+    | "START_GAME"
+    | "ROLL_DICE"
+    | "BUY_PROPERTY"
+    | "START_AUCTION"
+    | "BID"
+    | "BUY_HOUSE"
+    | "TRADE"
+    | "PAY_JAIL_FINE"
+    | "USE_JAIL_CARD"
+    | "END_TURN";
+
+export interface BaseAction {
+    type: ActionType;
+}
+
+export interface StartGameAction extends BaseAction {
+    type: "START_GAME";
+    payload?: never;
+}
+
+export interface RollDiceAction extends BaseAction {
+    type: "ROLL_DICE";
+    payload?: never;
+}
+
+export interface BuyPropertyAction extends BaseAction {
+    type: "BUY_PROPERTY";
+    payload: { propertyId: number };
+}
+
+export interface StartAuctionAction extends BaseAction {
+    type: "START_AUCTION";
+    payload: { propertyId: number };
+}
+
+export interface BidAction extends BaseAction {
+    type: "BID";
+    payload: { amount: number };
+}
+
+export interface BuyHouseAction extends BaseAction {
+    type: "BUY_HOUSE";
+    payload: { propertyId: number };
+}
+
+export interface TradeAction extends BaseAction {
+    type: "TRADE";
+    payload: TradeDetails;
+}
+
+export interface PayJailFineAction extends BaseAction {
+    type: "PAY_JAIL_FINE";
+    payload?: never;
+}
+
+export interface UseJailCardAction extends BaseAction {
+    type: "USE_JAIL_CARD";
+    payload?: never;
+}
+
+export interface EndTurnAction extends BaseAction {
+    type: "END_TURN";
+    payload?: never;
+}
+
+export type PlayerAction =
+    | StartGameAction
+    | RollDiceAction
+    | BuyPropertyAction
+    | StartAuctionAction
+    | BidAction
+    | BuyHouseAction
+    | TradeAction
+    | PayJailFineAction
+    | UseJailCardAction
+    | EndTurnAction;
