@@ -5,7 +5,7 @@ interface ModalsProps {
     property: Property | null;
     card: Card | null;
     onClose: () => void;
-    onBuyProperty?: () => void;
+    onBuyProperty?: (propertyId: number) => void;
 }
 
 const Modals: React.FC<ModalsProps> = ({
@@ -83,7 +83,14 @@ const Modals: React.FC<ModalsProps> = ({
                             )}
                         </div>
                         <div className="flex justify-end gap-2">
-                            <Button onClick={onBuyProperty}>
+                            <Button
+                                onClick={() =>
+                                    onBuyProperty &&
+                                    property &&
+                                    property.id &&
+                                    onBuyProperty(property.id)
+                                }
+                            >
                                 Buy Property
                             </Button>
                             <Button

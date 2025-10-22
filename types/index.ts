@@ -12,6 +12,7 @@ export interface Player {
 }
 
 export interface Property {
+    id?: number;
     name: string;
     group: string;
     price: number;

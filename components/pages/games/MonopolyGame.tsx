@@ -97,12 +97,13 @@ const MonopolyGame = ({
         });
     };
 
-    const handleBuyProperty = () => {
+    const handleBuyProperty = (propertyId: number) => {
         socket.emit("player_action", {
             roomId,
-            action: { type: "BUY_PROPERTY" },
+            action: { type: "BUY_PROPERTY", payload: { propertyId } },
             address,
         });
+        setRecentlyPurchasedId(propertyId);
     };
 
     const handleBuyHouse = (propertyId: number) => {
@@ -111,7 +112,35 @@ const MonopolyGame = ({
             action: { type: "BUY_HOUSE", payload: { propertyId } },
             address,
         });
+        setBuildingPropertyId(propertyId);
     };
+
+    useEffect(() => {
+        if (recentlyPurchasedId !== null) {
+            const timer = setTimeout(() => {
+                setRecentlyPurchasedId(null);
+            }, 1000); // Animation duration
+            return () => clearTimeout(timer);
+        }
+    }, [recentlyPurchasedId]);
+
+    useEffect(() => {
+        if (recentlyBuiltId !== null) {
+            const timer = setTimeout(() => {
+                setRecentlyBuiltId(null);
+            }, 3000); // Animation duration
+            return () => clearTimeout(timer);
+        }
+    }, [recentlyBuiltId]);
+
+    useEffect(() => {
+        if (buildingPropertyId !== null) {
+            const timer = setTimeout(() => {
+                setBuildingPropertyId(null);
+            }, 3000); // Animation duration
+            return () => clearTimeout(timer);
+        }
+    }, [buildingPropertyId]);
 
     const handleTrade = (tradeDetails: TradeDetails) => {
         socket.emit("player_action", {
@@ -152,9 +181,10 @@ const MonopolyGame = ({
         const utility = gameState.utilities[propertyId];
 
         if (property) {
-            setInspectedProperty(property);
+            setInspectedProperty({ ...property, id: propertyId });
         } else if (railroad) {
             const railroadProperty: Property = {
+                id: propertyId,
                 name: railroad.name,
                 price: railroad.price,
                 owner: railroad.owner,
@@ -166,6 +196,7 @@ const MonopolyGame = ({
             setInspectedProperty(railroadProperty);
         } else if (utility) {
             const utilityProperty: Property = {
+                id: propertyId,
                 name: utility.name,
                 price: utility.price,
                 owner: utility.owner,
@@ -194,8 +225,13 @@ const MonopolyGame = ({
     const currentPlayer = gameState.players[gameState.currentPlayerIndex];
     const isCurrentPlayerTurn = player?.id === currentPlayer.id;
 
-    const onBuyProperty = () => {
-        handleBuyProperty();
+    const currentPropertyId = currentPlayer.position;
+    const propertyOnCurrentSquare = gameState.properties[currentPropertyId];
+    const isPropertyBuyable =
+        propertyOnCurrentSquare && !propertyOnCurrentSquare.owner;
+
+    const onBuyProperty = (propertyId: number) => {
+        handleBuyProperty(propertyId);
         closeModal();
     };
 
@@ -293,6 +329,9 @@ const MonopolyGame = ({
                         shouldAnimateDice={shouldAnimateDice}
                         onDiceAnimationComplete={onDiceAnimationComplete}
                         isCurrentPlayerTurn={isCurrentPlayerTurn}
+                        currentPropertyId={
+                            isPropertyBuyable ? currentPropertyId : null
+                        }
                     />
                 )}
             </div>

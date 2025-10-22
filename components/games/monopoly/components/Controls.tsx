@@ -5,7 +5,7 @@ import Dice, { DiceRef } from "@/components/games/dice/dice";
 interface ControlsProps {
     onRollDice: () => void;
     onEndTurn: () => void;
-    onBuyProperty: () => void;
+    onBuyProperty: (propertyId: number) => void;
     onPayJailFine: () => void;
     onUseJailCard: () => void;
     lastRoll: [number, number] | null;
@@ -15,6 +15,7 @@ interface ControlsProps {
     shouldAnimateDice: boolean;
     onDiceAnimationComplete: () => void;
     isCurrentPlayerTurn: boolean;
+    currentPropertyId: number | null;
 }
 
 const Controls: React.FC<ControlsProps> = ({
@@ -30,6 +31,7 @@ const Controls: React.FC<ControlsProps> = ({
     shouldAnimateDice,
     onDiceAnimationComplete,
     isCurrentPlayerTurn,
+    currentPropertyId,
 }) => {
     const dice1Ref = useRef<DiceRef>(null);
     const dice2Ref = useRef<DiceRef>(null);
@@ -89,7 +91,7 @@ const Controls: React.FC<ControlsProps> = ({
                             Roll Dice
                         </Button>
                         <div className="flex gap-2">
-                            <Button onClick={onBuyProperty}>
+                            <Button onClick={() => currentPropertyId !== null && onBuyProperty(currentPropertyId)} disabled={currentPropertyId === null}>
                                 Buy Property
                             </Button>
                             <Button
