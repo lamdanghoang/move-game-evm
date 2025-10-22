@@ -1,9 +1,12 @@
 {
-  "extends": "./tsconfig.json",
-  "compilerOptions": {
-    "module": "esnext",
-    "outDir": "dist",
-    "noEmit": false
-  },
-  "include": ["server.ts"]
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "module": "ESNext",
+        "target": "ES2017",
+        "outDir": "dist",
+        "strict": true,
+        "noEmit": false,
+        "isolatedModules": false
+    },
+    "include": ["server.mts"]
 }
