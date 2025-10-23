@@ -18,6 +18,12 @@ import { socket } from "@/lib/socketClient";
 import { useParams } from "next/navigation";
 import { useAccount } from "wagmi";
 
+type MoveAnimation = {
+    playerId: string;
+    endPosition: number;
+    currentPosition: number;
+};
+
 const MonopolyGame = ({
     gameState,
     player,
@@ -53,6 +59,9 @@ const MonopolyGame = ({
         null
     );
     const [buildingAnimKey, setBuildingAnimKey] = useState(0);
+    const [moveAnimation, setMoveAnimation] = useState<MoveAnimation | null>(
+        null
+    );
     const [stagedPlayerPositions, setStagedPlayerPositions] = useState(
         gameState.players.map((p) => ({ id: p.id, position: p.position }))
     );
@@ -63,6 +72,10 @@ const MonopolyGame = ({
             id: p.id,
             position: p.position,
         }));
+
+        if (moveAnimation) {
+            return;
+        }
 
         if (!isAnimating) {
             setStagedPlayerPositions(newPositions);
@@ -79,7 +92,7 @@ const MonopolyGame = ({
         return () => {
             clearTimeout(delayTimer);
         };
-    }, [gameState.gameLog]);
+    }, [gameState.gameLog, moveAnimation]);
 
     const handleRollDice = () => {
         socket.emit("player_action", {
@@ -88,6 +101,85 @@ const MonopolyGame = ({
             address,
         });
     };
+
+    useEffect(() => {
+        if (!moveAnimation) return;
+
+        const { playerId, endPosition, currentPosition } = moveAnimation;
+
+        // START: Update stagedPlayerPositions immediately to start animation
+        setStagedPlayerPositions((prev) =>
+            prev.map((p) =>
+                p.id === playerId ? { ...p, position: currentPosition } : p
+            )
+        );
+
+        // END: Stop animation
+        if (currentPosition === endPosition) {
+            setMoveAnimation(null); // Stop loop
+            setIsAnimating(false);
+            return;
+        }
+
+        // CONTINUE: Move to next square
+        const timeout = setTimeout(() => {
+            const nextPosition = (currentPosition + 1) % 40;
+
+            setMoveAnimation((prev) => ({
+                ...prev!,
+                currentPosition: nextPosition,
+            }));
+        }, 200);
+
+        return () => clearTimeout(timeout);
+    }, [moveAnimation]);
+
+    useEffect(() => {
+        // Only run when there is a new update and no animation is running
+        if (moveAnimation) return;
+
+        const newPlayers = gameState.players;
+        const stagedPlayers = stagedPlayerPositions;
+
+        const playerToMove = newPlayers.find((p) => {
+            const stagedPlayer = stagedPlayers.find((sp) => sp.id === p.id);
+            // Check if the new position from the server is different from the current UI position
+            return stagedPlayer && p.position !== stagedPlayer.position;
+        });
+
+        if (playerToMove) {
+            const startPosition = stagedPlayerPositions.find(
+                (p) => p.id === playerToMove.id
+            )!.position;
+
+            // If the position changes and it's not due to a straight jump (like going to jail),
+            // we start the animation
+            const distance = (playerToMove.position - startPosition + 40) % 40;
+            if (distance > 0) {
+                // Set the isAnimating flag to prevent other useEffects from updating stagedPos immediately
+                const delayTimer = setTimeout(() => {
+                    // 1. Set moving flag
+                    setIsAnimating(true);
+
+                    // 2. Initiate animation square by square moving
+                    setMoveAnimation({
+                        playerId: playerToMove.id,
+                        endPosition: playerToMove.position,
+                        currentPosition: startPosition,
+                    });
+                }, 800);
+
+                // Clean up
+                return () => clearTimeout(delayTimer);
+            } else {
+                // If jump straight (go to jail) or don't move, update immediately
+                setIsAnimating(false);
+            }
+        } else {
+            // If there is no movement animation, make sure the flag is disabled
+            setIsAnimating(false);
+        }
+    }, [gameState.players]);
 
     const handleEndTurn = () => {
         socket.emit("player_action", {
@@ -274,10 +366,19 @@ const MonopolyGame = ({
                     gameState={{
                         ...gameState,
                         players: gameState.players.map((player) => {
+                            const movePos =
+                                moveAnimation?.playerId === player.id
+                                    ? moveAnimation.currentPosition
+                                    : undefined;
+
                             const stagedPos = stagedPlayerPositions.find(
                                 (p) => p.id === player.id
                             )?.position;
-                            return stagedPos !== undefined
+
+                            // Returns the preferred position (movePos > stagedPos > player.position)
+                            return movePos !== undefined
+                                ? { ...player, position: movePos }
+                                : stagedPos !== undefined
                                 ? { ...player, position: stagedPos }
                                 : player;
                         }),

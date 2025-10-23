@@ -108,7 +108,7 @@ const Controls: React.FC<ControlsProps> = ({
                             >
                                 End Turn
                             </Button>
-                        </div>{" "}
+                        </div>
                     </>
                 )}
             </div>
