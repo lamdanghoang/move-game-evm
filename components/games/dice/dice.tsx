@@ -21,7 +21,14 @@ export interface DiceRef {
 
 const Dice = forwardRef<DiceRef, DiceProps>(
     (
-        { id = "dice", onRoll, className = "", disabled = false, size = "md", speed = 1200 },
+        {
+            id = "dice",
+            onRoll,
+            className = "",
+            disabled = false,
+            size = "md",
+            speed = 1200,
+        },
         ref
     ) => {
         const [currentRoll, setCurrentRoll] = useState<number>(1);
@@ -119,6 +126,21 @@ const Dice = forwardRef<DiceRef, DiceProps>(
             lg: "w-4 h-4",
         };
 
+        const getHalfSize = (s: typeof size): string => {
+            switch (s) {
+                case "xs":
+                    return "1.25rem"; // 40px / 2 = 20px
+                case "sm":
+                    return "2rem"; // 64px / 2 = 32px
+                case "md":
+                    return "3rem"; // 96px / 2 = 48px
+                case "lg":
+                    return "4rem"; // 128px / 2 = 64px
+                default:
+                    return "3rem";
+            }
+        };
+
         return (
             <div className={`dice-container ${className}`}>
                 <div
@@ -153,7 +175,9 @@ const Dice = forwardRef<DiceRef, DiceProps>(
                                 transformStyle: "preserve-3d",
                                 margin: 0,
                                 padding: 0,
-                                transition: `transform ${speed / 1000}s ease-out`,
+                                transition: `transform ${
+                                    speed / 1000
+                                }s ease-out`,
                                 transform: getRollTransform(
                                     currentRoll,
                                     rollCount % 2 === 0
@@ -191,40 +215,28 @@ const Dice = forwardRef<DiceRef, DiceProps>(
                                                 : "1rem",
                                         transform:
                                             side === 1
-                                                ? `translateZ(${
-                                                      size === "xs"
-                                                          ? "1.25rem"
-                                                          : "3rem"
-                                                  })`
+                                                ? `translateZ(${getHalfSize(
+                                                      size
+                                                  )})`
                                                 : side === 6
-                                                ? `rotateY(180deg) translateZ(${
-                                                      size === "xs"
-                                                          ? "1.25rem"
-                                                          : "3rem"
-                                                  })`
+                                                ? `rotateY(180deg) translateZ(${getHalfSize(
+                                                      size
+                                                  )})`
                                                 : side === 2
-                                                ? `rotateY(90deg) translateZ(${
-                                                      size === "xs"
-                                                          ? "1.25rem"
-                                                          : "3rem"
-                                                  })`
+                                                ? `rotateY(90deg) translateZ(${getHalfSize(
+                                                      size
+                                                  )})`
                                                 : side === 5
-                                                ? `rotateY(-90deg) translateZ(${
-                                                      size === "xs"
-                                                          ? "1.25rem"
-                                                          : "3rem"
-                                                  })`
+                                                ? `rotateY(-90deg) translateZ(${getHalfSize(
+                                                      size
+                                                  )})`
                                                 : side === 3
-                                                ? `rotateX(90deg) translateZ(${
-                                                      size === "xs"
-                                                          ? "1.25rem"
-                                                          : "3rem"
-                                                  })`
-                                                : `rotateX(-90deg) translateZ(${
-                                                      size === "xs"
-                                                          ? "1.25rem"
-                                                          : "3rem"
-                                                  })`,
+                                                ? `rotateX(90deg) translateZ(${getHalfSize(
+                                                      size
+                                                  )})`
+                                                : `rotateX(-90deg) translateZ(${getHalfSize(
+                                                      size
+                                                  )})`,
                                     }}
                                 >
                                     {Array.from({ length: side }).map(

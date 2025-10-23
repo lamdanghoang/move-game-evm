@@ -43,27 +43,19 @@ const MonopolyRoomPage = () => {
         };
 
         const handleGameUpdate = (data: GameUpdateData) => {
-            const newGameState = data.gameState;
             setGameState(data.gameState);
 
             const currentPlayer = data.gameState.players.find(
                 (p) => p.id === address
             );
             setPlayer(currentPlayer);
-
-            const serverLastRoll = newGameState.lastRoll;
-            if (serverLastRoll && serverLastRoll[0] > 0) {
-                setLastRollResult(serverLastRoll);
-            } else {
-                setLastRollResult(DEFAULT_LAST_ROLL);
-                setIsAnimating(false);
-            }
         };
 
         socket.on("dice_rolled", handleDiceRolled);
         socket.on("game_updated", handleGameUpdate);
 
         return () => {
+            socket.off("dice_rolled", handleDiceRolled);
             socket.off("game_updated", handleGameUpdate);
         };
     }, [address]);

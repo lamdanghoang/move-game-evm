@@ -12,8 +12,8 @@ interface ControlsProps {
     hasRolled: boolean;
     inJail: boolean;
     hasJailCard: boolean;
-    shouldAnimateDice: boolean;
-    onDiceAnimationComplete: () => void;
+    // shouldAnimateDice: boolean;
+    // onDiceAnimationComplete: () => void;
     isCurrentPlayerTurn: boolean;
     currentPropertyId: number | null;
 }
@@ -28,8 +28,8 @@ const Controls: React.FC<ControlsProps> = ({
     hasRolled,
     inJail,
     hasJailCard,
-    shouldAnimateDice,
-    onDiceAnimationComplete,
+    // shouldAnimateDice,
+    // onDiceAnimationComplete,
     isCurrentPlayerTurn,
     currentPropertyId,
 }) => {
@@ -37,12 +37,14 @@ const Controls: React.FC<ControlsProps> = ({
     const dice2Ref = useRef<DiceRef>(null);
 
     useEffect(() => {
-        if (lastRoll && shouldAnimateDice) {
+        if (lastRoll) {
+            // if (lastRoll && shouldAnimateDice) {
             dice1Ref.current?.rollToValue(lastRoll[0]);
             dice2Ref.current?.rollToValue(lastRoll[1]);
-            onDiceAnimationComplete();
+            // onDiceAnimationComplete();
         }
-    }, [lastRoll, shouldAnimateDice]);
+    }, [lastRoll]);
+    // }, [lastRoll, shouldAnimateDice]);
     return (
         <div
             className="absolute col-start-2 col-span-9 row-start-2 row-span-9 flex flex-col items-center justify-center rounded-full text-center gap-3
@@ -91,7 +93,13 @@ const Controls: React.FC<ControlsProps> = ({
                             Roll Dice
                         </Button>
                         <div className="flex gap-2">
-                            <Button onClick={() => currentPropertyId !== null && onBuyProperty(currentPropertyId)} disabled={currentPropertyId === null}>
+                            <Button
+                                onClick={() =>
+                                    currentPropertyId !== null &&
+                                    onBuyProperty(currentPropertyId)
+                                }
+                                disabled={currentPropertyId === null}
+                            >
                                 Buy Property
                             </Button>
                             <Button

@@ -35,11 +35,11 @@ const MonopolyGame = ({
     const { id: roomId } = params;
     const { address } = useAccount();
     const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
-    const [shouldAnimateDice, setShouldAnimateDice] = useState(false);
+    // const [shouldAnimateDice, setShouldAnimateDice] = useState(false);
 
-    const onDiceAnimationComplete = useCallback(() => {
-        setShouldAnimateDice(false);
-    }, []);
+    // const onDiceAnimationComplete = useCallback(() => {
+    //     setShouldAnimateDice(false);
+    // }, []);
     const [modalProperty, setModalProperty] = useState<Property | null>(null);
     const [modalCard, setModalCard] = useState<Card | null>(null);
     const [inspectedProperty, setInspectedProperty] = useState<Property | null>(
@@ -82,7 +82,6 @@ const MonopolyGame = ({
     }, [gameState.gameLog]);
 
     const handleRollDice = () => {
-        setShouldAnimateDice(true);
         socket.emit("player_action", {
             roomId,
             action: { type: "ROLL_DICE" },
@@ -230,7 +229,10 @@ const MonopolyGame = ({
     const isCurrentPlayerTurn = player?.id === currentPlayer.id;
 
     const currentPropertyId = currentPlayer.position;
-    const propertyOnCurrentSquare = gameState.properties[currentPropertyId];
+    const propertyOnCurrentSquare =
+        gameState.properties[currentPropertyId] ||
+        gameState.railroads[currentPropertyId] ||
+        gameState.utilities[currentPropertyId];
     const isPropertyBuyable =
         propertyOnCurrentSquare && !propertyOnCurrentSquare.owner;
 
@@ -330,8 +332,8 @@ const MonopolyGame = ({
                         onPayJailFine={handlePayJailFine}
                         onUseJailCard={useGetOutOfJailCard}
                         hasJailCard={false}
-                        shouldAnimateDice={shouldAnimateDice}
-                        onDiceAnimationComplete={onDiceAnimationComplete}
+                        // shouldAnimateDice={shouldAnimateDice}
+                        // onDiceAnimationComplete={onDiceAnimationComplete}
                         isCurrentPlayerTurn={isCurrentPlayerTurn}
                         currentPropertyId={
                             isPropertyBuyable ? currentPropertyId : null
