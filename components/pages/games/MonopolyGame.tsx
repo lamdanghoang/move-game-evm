@@ -52,6 +52,7 @@ const MonopolyGame = ({
     const [buildingPropertyId, setBuildingPropertyId] = useState<number | null>(
         null
     );
+    const [buildingAnimKey, setBuildingAnimKey] = useState(0);
     const [stagedPlayerPositions, setStagedPlayerPositions] = useState(
         gameState.players.map((p) => ({ id: p.id, position: p.position }))
     );
@@ -138,6 +139,9 @@ const MonopolyGame = ({
             const timer = setTimeout(() => {
                 setBuildingPropertyId(null);
             }, 3000); // Animation duration
+
+            setBuildingAnimKey((prev) => prev + 1);
+
             return () => clearTimeout(timer);
         }
     }, [buildingPropertyId]);
@@ -382,10 +386,11 @@ const MonopolyGame = ({
                             const colorName = getColorName(player.color);
                             const animSrc = `/animations/monopoly-${colorName}-${
                                 isHotel ? "hotel" : "house"
-                            }.gif?t=${Date.now()}`;
+                            }.gif`;
 
                             return (
                                 <motion.div
+                                    key={buildingAnimKey}
                                     className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
