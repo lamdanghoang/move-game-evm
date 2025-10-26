@@ -20,18 +20,24 @@ export interface Property {
     owner: string | null;
     houses: number;
     housePrice: number;
+    mortgageValue: number;
+    isMortgaged: boolean;
 }
 
 export interface Railroad {
     name: string;
     price: number;
     owner: string | null;
+    mortgageValue: number;
+    isMortgaged: boolean;
 }
 
 export interface Utility {
     name: string;
     price: number;
     owner: string | null;
+    mortgageValue: number;
+    isMortgaged: boolean;
 }
 
 export interface Card {
@@ -77,6 +83,7 @@ export interface GameState {
     chanceCards: Card[];
     communityChestCards: Card[];
     gameLog: GameEvent[];
+    currentTrade: TradeDetails | null;
 }
 
 export interface TradeDetails {
@@ -131,10 +138,16 @@ export type ActionType =
     | "START_AUCTION"
     | "BID"
     | "BUY_HOUSE"
+    | "SELL_HOUSE"
     | "TRADE"
+    | "PROPOSE_TRADE"
+    | "ACCEPT_TRADE"
+    | "REJECT_TRADE"
     | "PAY_JAIL_FINE"
     | "USE_JAIL_CARD"
-    | "END_TURN";
+    | "END_TURN"
+    | "MORTGAGE_PROPERTY"
+    | "UNMORTGAGE_PROPERTY";
 
 export interface BaseAction {
     type: ActionType;
@@ -170,6 +183,11 @@ export interface BuyHouseAction extends BaseAction {
     payload: { propertyId: number };
 }
 
+export interface SellHouseAction extends BaseAction {
+    type: "SELL_HOUSE";
+    payload: { propertyId: number };
+}
+
 export interface TradeAction extends BaseAction {
     type: "TRADE";
     payload: TradeDetails;
@@ -185,6 +203,31 @@ export interface UseJailCardAction extends BaseAction {
     payload?: never;
 }
 
+export interface ProposeTradeAction extends BaseAction {
+    type: "PROPOSE_TRADE";
+    payload: TradeDetails;
+}
+
+export interface AcceptTradeAction extends BaseAction {
+    type: "ACCEPT_TRADE";
+    payload?: never;
+}
+
+export interface RejectTradeAction extends BaseAction {
+    type: "REJECT_TRADE";
+    payload?: never;
+}
+
+export interface MortgagePropertyAction extends BaseAction {
+    type: "MORTGAGE_PROPERTY";
+    payload: { propertyId: number };
+}
+
+export interface UnmortgagePropertyAction extends BaseAction {
+    type: "UNMORTGAGE_PROPERTY";
+    payload: { propertyId: number };
+}
+
 export interface EndTurnAction extends BaseAction {
     type: "END_TURN";
     payload?: never;
@@ -197,7 +240,13 @@ export type PlayerAction =
     | StartAuctionAction
     | BidAction
     | BuyHouseAction
+    | SellHouseAction
     | TradeAction
+    | ProposeTradeAction
+    | AcceptTradeAction
+    | RejectTradeAction
     | PayJailFineAction
     | UseJailCardAction
+    | MortgagePropertyAction
+    | UnmortgagePropertyAction
     | EndTurnAction;

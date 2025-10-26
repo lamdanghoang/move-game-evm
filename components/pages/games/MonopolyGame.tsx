@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import GameBoard from "../../games/monopoly/components/GameBoard";
 import PlayerStats from "../../games/monopoly/components/PlayerStats";
 import Chat from "../../games/monopoly/components/Chat";
@@ -66,6 +66,21 @@ const MonopolyGame = ({
         gameState.players.map((p) => ({ id: p.id, position: p.position }))
     );
     const [delayedGameLog, setDelayedGameLog] = useState(gameState.gameLog);
+    const prevGameStateRef = useRef<GameState | null>(null);
+
+    useEffect(() => {
+        if (prevGameStateRef.current) {
+            for (const propId in gameState.properties) {
+                const currentProp = gameState.properties[propId];
+                const prevProp = prevGameStateRef.current.properties[propId];
+
+                if (prevProp && currentProp.houses > prevProp.houses) {
+                    setBuildingPropertyId(parseInt(propId));
+                }
+            }
+        }
+        prevGameStateRef.current = gameState;
+    }, [gameState]);
 
     useEffect(() => {
         const newPositions = gameState.players.map((p) => ({
@@ -204,7 +219,6 @@ const MonopolyGame = ({
             action: { type: "BUY_HOUSE", payload: { propertyId } },
             address,
         });
-        setBuildingPropertyId(propertyId);
     };
 
     useEffect(() => {
@@ -287,6 +301,8 @@ const MonopolyGame = ({
                 rent: [25, 50, 100, 200],
                 houses: 0,
                 housePrice: 0,
+                mortgageValue: railroad.mortgageValue,
+                isMortgaged: railroad.isMortgaged,
             };
             setInspectedProperty(railroadProperty);
         } else if (utility) {
@@ -299,6 +315,8 @@ const MonopolyGame = ({
                 rent: [],
                 houses: 0,
                 housePrice: 0,
+                mortgageValue: utility.mortgageValue,
+                isMortgaged: utility.isMortgaged,
             };
             setInspectedProperty(utilityProperty);
         }
@@ -358,6 +376,7 @@ const MonopolyGame = ({
                             ...gameState.utilities,
                         }}
                         onBuyHouse={handleBuyHouse}
+                        isCurrentPlayerTurn={isCurrentPlayerTurn}
                     />
                 )}
             </div>
@@ -432,7 +451,9 @@ const MonopolyGame = ({
                         inJail={currentPlayer?.inJail || false}
                         onPayJailFine={handlePayJailFine}
                         onUseJailCard={useGetOutOfJailCard}
-                        hasJailCard={false}
+                        getOutOfJailFreeCards={
+                            currentPlayer?.getOutOfJailFreeCards || 0
+                        }
                         // shouldAnimateDice={shouldAnimateDice}
                         // onDiceAnimationComplete={onDiceAnimationComplete}
                         isCurrentPlayerTurn={isCurrentPlayerTurn}

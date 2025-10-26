@@ -1,4 +1,6 @@
+import { Button } from "@/components/ui/button";
 import { Player, Property, Railroad, Utility } from "@/types";
+import { toast } from "sonner";
 
 type OwnableProperty = Property | Railroad | Utility;
 
@@ -6,21 +8,39 @@ interface PropertyPortfolioProps {
     player: Player;
     properties: { [key: number]: OwnableProperty };
     onBuyHouse: (propertyId: number) => void;
+    isCurrentPlayerTurn: boolean;
 }
 
-const PropertyPortfolio = ({ player, properties, onBuyHouse }: PropertyPortfolioProps) => {
-    const playerProperties = player.properties.map((id) => properties[id]).filter(Boolean);
+const PropertyPortfolio = ({
+    player,
+    properties,
+    onBuyHouse,
+    isCurrentPlayerTurn,
+}: PropertyPortfolioProps) => {
+    const playerProperties = player.properties
+        .map((id) => properties[id])
+        .filter(Boolean);
 
-    const totalValue = player.money + playerProperties.reduce((acc, property) => acc + property.price, 0);
+    const totalValue =
+        player.money +
+        playerProperties.reduce((acc, property) => acc + property.price, 0);
 
     const groupedProperties = playerProperties.reduce((acc, property) => {
-        const group = 'group' in property ? property.group : 'Other';
+        const group = "group" in property ? property.group : "Other";
         if (!acc[group]) {
             acc[group] = [];
         }
         acc[group].push(property);
         return acc;
     }, {} as { [key: string]: OwnableProperty[] });
+
+    const handleBuyHouse = (propertyId: number) => {
+        if (!isCurrentPlayerTurn) {
+            toast.error("It's not your turn!");
+            return;
+        }
+        onBuyHouse(propertyId);
+    };
 
     return (
         <div className="bg-neutral-800 border border-zinc-500/20 rounded-2xl p-4 flex flex-col gap-3">
@@ -35,15 +55,38 @@ const PropertyPortfolio = ({ player, properties, onBuyHouse }: PropertyPortfolio
                 ) : (
                     Object.entries(groupedProperties).map(([group, props]) => (
                         <div key={group} className="mb-2">
-                            <h4 className="text-sm font-semibold text-cyan-300/80 mb-1 capitalize">{group}</h4>
-                            {props.map((property) => (
-                                <div key={property.name} className="flex justify-between items-center text-xs/normal">
-                                    <span>{property.name}</span>
-                                    {'houses' in property && property.houses < 5 && (
-                                        <button onClick={() => onBuyHouse(player.properties.find(id => properties[id] === property)!)} className="text-xs bg-cyan-500 text-white px-2 py-1 rounded">Buy House</button>
-                                    )}
-                                </div>
-                            ))}
+                            <h4 className="text-sm font-semibold text-cyan-300/80 mb-1 capitalize">
+                                {group}
+                            </h4>
+                            <div className="flex flex-col gap-1">
+                                {props.map((property) => (
+                                    <div
+                                        key={property.name}
+                                        className="flex justify-between items-center text-xs/normal"
+                                    >
+                                        <span>{property.name}</span>
+                                        {"houses" in property &&
+                                            property.houses < 5 && (
+                                                <Button
+                                                    onClick={() =>
+                                                        handleBuyHouse(
+                                                            player.properties.find(
+                                                                (id) =>
+                                                                    properties[
+                                                                        id
+                                                                    ] ===
+                                                                    property
+                                                            )!
+                                                        )
+                                                    }
+                                                    className="h-fit text-xs bg-cyan-500 text-white px-2 py-1 rounded"
+                                                >
+                                                    Buy House
+                                                </Button>
+                                            )}
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     ))
                 )}

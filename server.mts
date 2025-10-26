@@ -13,6 +13,7 @@ import {
     Square,
     PlayerAction,
     RoomPlayer,
+    TradeDetails,
 } from "./types";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -25,6 +26,7 @@ const handle = app.getRequestHandler();
 const port = process.env.PORT || 10000;
 
 const roomPlayers = new Map<string, string[]>();
+const activeAuctionIntervals = new Map<string, NodeJS.Timeout>();
 
 const squares: Square[] = [
     { name: "GO", type: "go" },
@@ -229,10 +231,8 @@ const communityChestCards: Card[] = [
 function shuffle<T>(array: T[]): T[] {
     for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
-
         [array[i], array[j]] = [array[j], array[i]];
     }
-
     return array;
 }
 
@@ -258,6 +258,8 @@ function getInitialGameState(): GameState {
                 owner: null,
                 houses: 0,
                 housePrice: 50,
+                mortgageValue: 30,
+                isMortgaged: false,
             },
             3: {
                 name: "Neon District",
@@ -267,6 +269,8 @@ function getInitialGameState(): GameState {
                 owner: null,
                 houses: 0,
                 housePrice: 50,
+                mortgageValue: 40,
+                isMortgaged: false,
             },
             6: {
                 name: "Cyber Avenue",
@@ -276,6 +280,8 @@ function getInitialGameState(): GameState {
                 owner: null,
                 houses: 0,
                 housePrice: 50,
+                mortgageValue: 50,
+                isMortgaged: false,
             },
             8: {
                 name: "Data Street",
@@ -285,6 +291,8 @@ function getInitialGameState(): GameState {
                 owner: null,
                 houses: 0,
                 housePrice: 50,
+                mortgageValue: 50,
+                isMortgaged: false,
             },
             9: {
                 name: "Matrix Boulevard",
@@ -294,6 +302,8 @@ function getInitialGameState(): GameState {
                 owner: null,
                 houses: 0,
                 housePrice: 50,
+                mortgageValue: 60,
+                isMortgaged: false,
             },
             11: {
                 name: "Tech Central",
@@ -303,6 +313,8 @@ function getInitialGameState(): GameState {
                 owner: null,
                 houses: 0,
                 housePrice: 50,
+                mortgageValue: 70,
+                isMortgaged: false,
             },
             13: {
                 name: "AI Labs",
@@ -312,6 +324,8 @@ function getInitialGameState(): GameState {
                 owner: null,
                 houses: 0,
                 housePrice: 50,
+                mortgageValue: 70,
+                isMortgaged: false,
             },
             14: {
                 name: "Neural Network",
@@ -321,6 +335,8 @@ function getInitialGameState(): GameState {
                 owner: null,
                 houses: 0,
                 housePrice: 50,
+                mortgageValue: 80,
+                isMortgaged: false,
             },
             16: {
                 name: "Quantum Plaza",
@@ -330,6 +346,8 @@ function getInitialGameState(): GameState {
                 owner: null,
                 houses: 0,
                 housePrice: 100,
+                mortgageValue: 90,
+                isMortgaged: false,
             },
             18: {
                 name: "Hologram Heights",
@@ -339,6 +357,8 @@ function getInitialGameState(): GameState {
                 owner: null,
                 houses: 0,
                 housePrice: 100,
+                mortgageValue: 90,
+                isMortgaged: false,
             },
             19: {
                 name: "Crypto Corner",
@@ -348,6 +368,8 @@ function getInitialGameState(): GameState {
                 owner: null,
                 houses: 0,
                 housePrice: 100,
+                mortgageValue: 100,
+                isMortgaged: false,
             },
             21: {
                 name: "Digital Domain",
@@ -357,6 +379,8 @@ function getInitialGameState(): GameState {
                 owner: null,
                 houses: 0,
                 housePrice: 150,
+                mortgageValue: 110,
+                isMortgaged: false,
             },
             23: {
                 name: "Cloud City",
@@ -366,6 +390,8 @@ function getInitialGameState(): GameState {
                 owner: null,
                 houses: 0,
                 housePrice: 150,
+                mortgageValue: 110,
+                isMortgaged: false,
             },
             24: {
                 name: "Meta Metropolis",
@@ -375,6 +401,8 @@ function getInitialGameState(): GameState {
                 owner: null,
                 houses: 0,
                 housePrice: 150,
+                mortgageValue: 120,
+                isMortgaged: false,
             },
             26: {
                 name: "Blockchain Boulevard",
@@ -384,6 +412,8 @@ function getInitialGameState(): GameState {
                 owner: null,
                 houses: 0,
                 housePrice: 200,
+                mortgageValue: 130,
+                isMortgaged: false,
             },
             27: {
                 name: "NFT Plaza",
@@ -393,6 +423,8 @@ function getInitialGameState(): GameState {
                 owner: null,
                 houses: 0,
                 housePrice: 200,
+                mortgageValue: 130,
+                isMortgaged: false,
             },
             29: {
                 name: "Token Tower",
@@ -402,6 +434,8 @@ function getInitialGameState(): GameState {
                 owner: null,
                 houses: 0,
                 housePrice: 200,
+                mortgageValue: 140,
+                isMortgaged: false,
             },
             31: {
                 name: "Cyberpunk Central",
@@ -411,6 +445,8 @@ function getInitialGameState(): GameState {
                 owner: null,
                 houses: 0,
                 housePrice: 200,
+                mortgageValue: 150,
+                isMortgaged: false,
             },
             32: {
                 name: "Neo Tokyo",
@@ -420,6 +456,8 @@ function getInitialGameState(): GameState {
                 owner: null,
                 houses: 0,
                 housePrice: 200,
+                mortgageValue: 150,
+                isMortgaged: false,
             },
             34: {
                 name: "Future City",
@@ -429,6 +467,8 @@ function getInitialGameState(): GameState {
                 owner: null,
                 houses: 0,
                 housePrice: 200,
+                mortgageValue: 160,
+                isMortgaged: false,
             },
             37: {
                 name: "Virtual Nexus",
@@ -438,6 +478,8 @@ function getInitialGameState(): GameState {
                 owner: null,
                 houses: 0,
                 housePrice: 200,
+                mortgageValue: 175,
+                isMortgaged: false,
             },
             39: {
                 name: "Digital Paradise",
@@ -447,26 +489,843 @@ function getInitialGameState(): GameState {
                 owner: null,
                 houses: 0,
                 housePrice: 200,
+                mortgageValue: 200,
+                isMortgaged: false,
             },
         },
         railroads: {
-            5: { name: "Neural Station", price: 200, owner: null },
-            15: { name: "Cyber Station", price: 200, owner: null },
-            25: { name: "Virtual Station", price: 200, owner: null },
-            35: { name: "Mainframe Station", price: 200, owner: null },
+            5: {
+                name: "Neural Station",
+                price: 200,
+                owner: null,
+                mortgageValue: 100,
+                isMortgaged: false,
+            },
+            15: {
+                name: "Cyber Station",
+                price: 200,
+                owner: null,
+                mortgageValue: 100,
+                isMortgaged: false,
+            },
+            25: {
+                name: "Virtual Station",
+                price: 200,
+                owner: null,
+                mortgageValue: 100,
+                isMortgaged: false,
+            },
+            35: {
+                name: "Mainframe Station",
+                price: 200,
+                owner: null,
+                mortgageValue: 100,
+                isMortgaged: false,
+            },
         },
         utilities: {
-            12: { name: "Power Grid", price: 150, owner: null },
-            28: { name: "Data Center", price: 150, owner: null },
+            12: {
+                name: "Power Grid",
+                price: 150,
+                owner: null,
+                mortgageValue: 75,
+                isMortgaged: false,
+            },
+            28: {
+                name: "Data Center",
+                price: 150,
+                owner: null,
+                mortgageValue: 75,
+                isMortgaged: false,
+            },
         },
         chanceCards: shuffle([...chanceCards]),
         communityChestCards: shuffle([...communityChestCards]),
         gameLog: [],
+        currentTrade: null,
     };
 }
 
 function generateRoomId(): string {
     return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
+
+class MonopolyGameManager {
+    gameState: GameState;
+    private socket: Socket;
+    private io: Server;
+    private roomId: string;
+
+    constructor(
+        gameState: GameState,
+        socket: Socket,
+        io: Server,
+        roomId: string
+    ) {
+        this.gameState = gameState;
+        this.socket = socket;
+        this.io = io;
+        this.roomId = roomId;
+    }
+
+    private handleBankruptcy(player: Player) {
+        if (player.money < 0) {
+            player.bankrupt = true;
+            this.gameState.gameLog.push({
+                time: new Date().toLocaleTimeString(),
+                text: `${player.name} has gone bankrupt!`,
+            });
+            const activePlayers = this.gameState.players.filter(
+                (p) => !p.bankrupt
+            );
+            if (activePlayers.length === 1) {
+                this.gameState.gameWon = true;
+                this.gameState.winner = activePlayers[0];
+                this.gameState.gameLog.push({
+                    time: new Date().toLocaleTimeString(),
+                    text: `${activePlayers[0].name} has won the game!`,
+                });
+            }
+        }
+    }
+
+    private payRent(player: Player, property: any) {
+        const owner = this.gameState.players.find(
+            (p) => p.id === property.owner
+        );
+        if (!owner || owner.id === player.id || property.isMortgaged) return;
+
+        let rentAmount = 0;
+        if (property.group === "railroad") {
+            const railroadCount = owner.properties.filter(
+                (pId) => this.gameState.railroads[pId]
+            ).length;
+            rentAmount = 25 * Math.pow(2, railroadCount - 1);
+        } else if (property.group === "utility") {
+            const utilityCount = owner.properties.filter(
+                (pId) => this.gameState.utilities[pId]
+            ).length;
+            const lastRollTotal =
+                this.gameState.lastRoll[0] + this.gameState.lastRoll[1];
+            rentAmount =
+                utilityCount === 1 ? lastRollTotal * 4 : lastRollTotal * 10;
+        } else {
+            rentAmount = property.rent[property.houses];
+            if (
+                property.houses === 0 &&
+                this.hasMonopoly(owner, property.group)
+            ) {
+                const groupProperties = this.getGroupProperties(property.group);
+                const allUnmortgaged = groupProperties.every(
+                    (p) => !p.isMortgaged
+                );
+                if (allUnmortgaged) {
+                    rentAmount *= 2;
+                }
+            }
+        }
+        player.money -= rentAmount;
+        owner.money += rentAmount;
+        this.gameState.gameLog.push({
+            time: new Date().toLocaleTimeString(),
+            text: `${player.name} paid ${rentAmount} in rent to ${owner.name}.`,
+        });
+        this.handleBankruptcy(player);
+    }
+
+    private getGroupProperties(group: string) {
+        return Object.values(this.gameState.properties).filter(
+            (prop) => prop.group === group
+        );
+    }
+
+    private hasMonopoly(player: Player, group: string) {
+        const groupProperties = this.getGroupProperties(group);
+        return groupProperties.every((prop) => prop.owner === player.id);
+    }
+
+    private handleCardAction(player: Player, card: Card): boolean {
+        this.gameState.gameLog.push({
+            time: new Date().toLocaleTimeString(),
+            text: `${player.name} drew: "${card.text}"`,
+        });
+        const oldPosition = player.position;
+        let moved = false;
+
+        switch (card.action.type) {
+            case "move":
+                player.position = card.action.position!;
+                if (player.position < oldPosition) {
+                    player.money += 200;
+                    this.gameState.gameLog.push({
+                        time: new Date().toLocaleTimeString(),
+                        text: `${player.name} passed GO and collected 200 credits.`,
+                    });
+                }
+                moved = true;
+                break;
+            case "move_nearest":
+                const groupSquares = squares
+                    .map((s, i) => ({ ...s, position: i }))
+                    .filter((s) => s.group === card.action.group);
+                let minDistance = 40;
+                let nearestSquare: (Square & { position: number }) | null =
+                    null;
+                for (const square of groupSquares) {
+                    let distance = square.position - player.position;
+                    if (distance < 0) distance += 40;
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        nearestSquare = square;
+                    }
+                }
+                if (nearestSquare) {
+                    if (nearestSquare.position < player.position) {
+                        player.money += 200;
+                        this.gameState.gameLog.push({
+                            time: new Date().toLocaleTimeString(),
+                            text: `${player.name} passed GO and collected 200 credits.`,
+                        });
+                    }
+                    player.position = nearestSquare.position;
+                    moved = true;
+                }
+                break;
+            case "move_by":
+                const newPos =
+                    (player.position + card.action.amount! + 40) % 40;
+                if (card.action.amount! > 0 && newPos < player.position) {
+                    player.money += 200;
+                    this.gameState.gameLog.push({
+                        time: new Date().toLocaleTimeString(),
+                        text: `${player.name} passed GO and collected 200 credits.`,
+                    });
+                }
+                player.position = newPos;
+                moved = true;
+                break;
+            case "collect":
+                player.money += card.action.amount!;
+                break;
+            case "pay":
+                player.money -= card.action.amount!;
+                this.handleBankruptcy(player);
+                break;
+            case "go_to_jail":
+                player.position = 10;
+                player.inJail = true;
+                this.endTurn(player);
+                return true;
+            case "get_out_of_jail_free":
+                player.getOutOfJailFreeCards =
+                    (player.getOutOfJailFreeCards || 0) + 1;
+                break;
+            case "pay_per_building":
+                let houses = 0;
+                let hotels = 0;
+                for (const propId of player.properties) {
+                    const property = this.gameState.properties[propId];
+                    if (property) {
+                        if (property.houses === 5) hotels++;
+                        else houses += property.houses;
+                    }
+                }
+                player.money -=
+                    houses * card.action.house! + hotels * card.action.hotel!;
+                this.handleBankruptcy(player);
+                break;
+            case "pay_each_player":
+                this.gameState.players.forEach((p) => {
+                    if (p.id !== player.id) {
+                        p.money += card.action.amount!;
+                        player.money -= card.action.amount!;
+                    }
+                });
+                this.handleBankruptcy(player);
+                break;
+            case "collect_from_each_player":
+                this.gameState.players.forEach((p) => {
+                    if (p.id !== player.id) {
+                        p.money -= card.action.amount!;
+                        player.money += card.action.amount!;
+                        this.handleBankruptcy(p);
+                    }
+                });
+                break;
+        }
+        if (moved) {
+            this.handleSquareLanding(player);
+        }
+        return false;
+    }
+
+    private handleSquareLanding(player: Player): boolean {
+        const square = squares[player.position];
+        this.gameState.gameLog.push({
+            time: new Date().toLocaleTimeString(),
+            text: `${player.name} landed on ${square.name}`,
+        });
+        switch (square.type) {
+            case "property":
+            case "railroad":
+            case "utility":
+                const property =
+                    this.gameState.properties[player.position] ||
+                    this.gameState.railroads[player.position] ||
+                    this.gameState.utilities[player.position];
+                if (property.owner && property.owner !== player.id) {
+                    this.payRent(player, property);
+                } else if (!property.owner) {
+                    this.socket.emit("promptBuyOrAuction", {
+                        propertyId: player.position,
+                    });
+                }
+                break;
+            case "tax":
+                player.money -= square.amount!;
+                this.gameState.gameLog.push({
+                    time: new Date().toLocaleTimeString(),
+                    text: `${player.name} paid ${square.amount} in ${square.name}.`,
+                });
+                this.handleBankruptcy(player);
+                break;
+            case "go_to_jail":
+                player.position = 10;
+                player.inJail = true;
+                this.gameState.gameLog.push({
+                    time: new Date().toLocaleTimeString(),
+                    text: `${player.name} went to jail!`,
+                });
+                this.endTurn(player);
+                return true;
+            case "chance":
+                const chanceCard = this.gameState.chanceCards.pop();
+                if (chanceCard) {
+                    this.socket.emit("cardDrawn", { card: chanceCard });
+                    const turnEnded = this.handleCardAction(player, chanceCard);
+                    this.gameState.chanceCards.unshift(chanceCard);
+                    return turnEnded;
+                }
+                break;
+            case "community_chest":
+                const communityChestCard =
+                    this.gameState.communityChestCards.pop();
+                if (communityChestCard) {
+                    this.socket.emit("cardDrawn", { card: communityChestCard });
+                    const turnEnded = this.handleCardAction(
+                        player,
+                        communityChestCard
+                    );
+                    this.gameState.communityChestCards.unshift(
+                        communityChestCard
+                    );
+                    return turnEnded;
+                }
+                break;
+        }
+        return false;
+    }
+
+    async updateSupabaseAndEmit() {
+        const { error } = await supabase
+            .from("rooms")
+            .update({ game_state: this.gameState as any })
+            .eq("id", this.roomId);
+        if (error) {
+            console.error("Could not update game state.", error);
+            this.socket.emit("error", {
+                message: "Could not update game state.",
+            });
+        }
+        this.io
+            .to(this.roomId)
+            .emit("game_updated", { gameState: this.gameState });
+    }
+
+    rollDice(player: Player) {
+        if (this.gameState.hasRolled) {
+            this.socket.emit("error", { message: "You have already rolled." });
+            return;
+        }
+        const dice1 = Math.floor(Math.random() * 6) + 1;
+        const dice2 = Math.floor(Math.random() * 6) + 1;
+        const total = dice1 + dice2;
+        const isDouble = dice1 === dice2;
+        this.gameState.lastRoll = [dice1, dice2];
+        this.io.to(this.roomId).emit("dice_rolled", { dice1, dice2, player });
+        this.gameState.gameLog.push({
+            time: new Date().toLocaleTimeString(),
+            text: `${player.name} rolled a ${total} (${dice1}+${dice2})${
+                isDouble ? " (double)" : ""
+            }`,
+        });
+
+        if (player.inJail) {
+            if (isDouble) {
+                player.inJail = false;
+                player.jailTurns = 0;
+                this.gameState.gameLog.push({
+                    time: new Date().toLocaleTimeString(),
+                    text: `${player.name} rolled doubles and got out of jail!`,
+                });
+                this.gameState.hasRolled = false; // can roll again
+            } else {
+                player.jailTurns++;
+                this.gameState.gameLog.push({
+                    time: new Date().toLocaleTimeString(),
+                    text: `${player.name} is still in jail. Turns in jail: ${player.jailTurns}`,
+                });
+                if (player.jailTurns >= 3) {
+                    player.money -= 50;
+                    player.inJail = false;
+                    player.jailTurns = 0;
+                    this.gameState.gameLog.push({
+                        time: new Date().toLocaleTimeString(),
+                        text: `${player.name} paid 50 credits to get out of jail after 3 turns.`,
+                    });
+                    this.handleBankruptcy(player);
+                }
+                this.endTurn(player);
+            }
+        } else {
+            if (isDouble) {
+                this.gameState.doubleRollCount++;
+            } else {
+                this.gameState.doubleRollCount = 0;
+            }
+
+            if (this.gameState.doubleRollCount === 3) {
+                player.inJail = true;
+                player.position = 10;
+                this.gameState.doubleRollCount = 0;
+                this.gameState.gameLog.push({
+                    time: new Date().toLocaleTimeString(),
+                    text: `${player.name} rolled three doubles and went to jail!`,
+                });
+                this.endTurn(player);
+            } else {
+                const oldPosition = player.position;
+                const newPosition = (oldPosition + total) % 40;
+                player.position = newPosition;
+                if (newPosition < oldPosition) {
+                    player.money += 200;
+                    this.gameState.gameLog.push({
+                        time: new Date().toLocaleTimeString(),
+                        text: `${player.name} passed GO and collected 200 credits.`,
+                    });
+                }
+                const turnEnded = this.handleSquareLanding(player);
+                if (!isDouble && !turnEnded) {
+                    this.gameState.hasRolled = true;
+                }
+            }
+        }
+    }
+
+    endTurn(player: Player) {
+        if (!this.gameState.hasRolled && !player.inJail) {
+            return this.socket.emit("error", {
+                message: "You must roll the dice before ending your turn.",
+            });
+        }
+        if (
+            this.gameState.lastRoll[0] === this.gameState.lastRoll[1] &&
+            !player.inJail
+        ) {
+            this.gameState.gameLog.push({
+                time: new Date().toLocaleTimeString(),
+                text: `${player.name} rolled doubles and gets another turn!`,
+            });
+            this.gameState.hasRolled = false;
+            this.gameState.doubleRollCount = 0;
+        } else {
+            this.gameState.currentPlayerIndex =
+                (this.gameState.currentPlayerIndex + 1) %
+                this.gameState.players.length;
+            this.gameState.hasRolled = false;
+            this.gameState.doubleRollCount = 0;
+            this.gameState.gameLog.push({
+                time: new Date().toLocaleTimeString(),
+                text: `It is now ${
+                    this.gameState.players[this.gameState.currentPlayerIndex]
+                        .name
+                }'s turn.`,
+            });
+        }
+    }
+
+    buyProperty(player: Player, propertyId: number) {
+        const property =
+            this.gameState.properties[propertyId] ||
+            this.gameState.railroads[propertyId] ||
+            this.gameState.utilities[propertyId];
+        if (property && !property.owner && player.money >= property.price) {
+            player.money -= property.price;
+            property.owner = player.id;
+            player.properties.push(propertyId);
+            this.gameState.gameLog.push({
+                time: new Date().toLocaleTimeString(),
+                text: `${player.name} bought ${property.name}.`,
+            });
+        } else {
+            this.socket.emit("error", { message: "Cannot buy this property." });
+        }
+    }
+
+    startAuction(propertyId: number) {
+        const property =
+            this.gameState.properties[propertyId] ||
+            this.gameState.railroads[propertyId] ||
+            this.gameState.utilities[propertyId];
+        if (property && !property.owner) {
+            this.gameState.auction = {
+                propertyId,
+                highestBid: 0,
+                highestBidder: null,
+                timer: 10,
+            };
+            this.gameState.gameLog.push({
+                time: new Date().toLocaleTimeString(),
+                text: `An auction has started for ${property.name}.`,
+            });
+
+            if (activeAuctionIntervals.has(this.roomId)) {
+                clearInterval(activeAuctionIntervals.get(this.roomId)!);
+            }
+
+            const interval = setInterval(async () => {
+                if (!this.gameState.auction) {
+                    clearInterval(interval);
+                    activeAuctionIntervals.delete(this.roomId);
+                    return;
+                }
+
+                this.gameState.auction.timer--;
+                if (this.gameState.auction.timer <= 0) {
+                    clearInterval(interval);
+                    activeAuctionIntervals.delete(this.roomId);
+                    this.resolveAuction();
+                }
+                await this.updateSupabaseAndEmit();
+            }, 1000);
+            activeAuctionIntervals.set(this.roomId, interval);
+        }
+    }
+
+    private resolveAuction() {
+        if (!this.gameState.auction) return;
+
+        const { propertyId, highestBid, highestBidder } =
+            this.gameState.auction;
+        const property =
+            this.gameState.properties[propertyId] ||
+            this.gameState.railroads[propertyId] ||
+            this.gameState.utilities[propertyId];
+
+        if (highestBidder) {
+            const winner = this.gameState.players.find(
+                (p) => p.id === highestBidder
+            );
+            if (winner) {
+                winner.money -= highestBid;
+                property.owner = winner.id;
+                winner.properties.push(propertyId);
+                this.gameState.gameLog.push({
+                    time: new Date().toLocaleTimeString(),
+                    text: `${winner.name} won the auction for ${property.name} for ${highestBid}.`,
+                });
+                this.handleBankruptcy(winner);
+            }
+        } else {
+            this.gameState.gameLog.push({
+                time: new Date().toLocaleTimeString(),
+                text: `Auction for ${property.name} ended with no bids.`,
+            });
+        }
+        this.gameState.auction = null;
+    }
+
+    proposeTrade(fromPlayer: Player, tradeDetails: TradeDetails) {
+        const toPlayer = this.gameState.players.find(
+            (p) => p.id === tradeDetails.toPlayerId
+        );
+        if (!toPlayer)
+            return this.socket.emit("error", {
+                message: "Trade recipient not found.",
+            });
+
+        for (const propId of tradeDetails.offeredProperties) {
+            const prop =
+                this.gameState.properties[propId] ||
+                this.gameState.railroads[propId] ||
+                this.gameState.utilities[propId];
+            if (
+                !prop ||
+                prop.owner !== fromPlayer.id ||
+                prop.isMortgaged ||
+                (prop.houses && prop.houses > 0)
+            ) {
+                return this.socket.emit("error", {
+                    message: "Invalid trade offer.",
+                });
+            }
+        }
+        for (const propId of tradeDetails.requestedProperties) {
+            const prop =
+                this.gameState.properties[propId] ||
+                this.gameState.railroads[propId] ||
+                this.gameState.utilities[propId];
+            if (
+                !prop ||
+                prop.owner !== toPlayer.id ||
+                prop.isMortgaged ||
+                (prop.houses && prop.houses > 0)
+            ) {
+                return this.socket.emit("error", {
+                    message: "Invalid trade request.",
+                });
+            }
+        }
+
+        this.gameState.currentTrade = tradeDetails;
+        this.io
+            .to(tradeDetails.toPlayerId)
+            .emit("trade_proposed", { trade: tradeDetails });
+        this.gameState.gameLog.push({
+            time: new Date().toLocaleTimeString(),
+            text: `${fromPlayer.name} proposed a trade to ${toPlayer.name}.`,
+        });
+    }
+
+    acceptTrade(player: Player) {
+        const trade = this.gameState.currentTrade;
+        if (!trade || trade.toPlayerId !== player.id) {
+            return this.socket.emit("error", {
+                message: "No active trade proposal for you to accept.",
+            });
+        }
+        const fromPlayer = this.gameState.players.find(
+            (p) => p.id === trade.fromPlayerId
+        );
+        if (!fromPlayer)
+            return this.socket.emit("error", {
+                message: "Proposing player not found.",
+            });
+
+        if (
+            fromPlayer.money < trade.offeredMoney ||
+            player.money < trade.requestedMoney
+        ) {
+            this.gameState.currentTrade = null;
+            return this.socket.emit("error", {
+                message: "A player does not have enough money for this trade.",
+            });
+        }
+
+        trade.offeredProperties.forEach((propId) => {
+            const prop =
+                this.gameState.properties[propId] ||
+                this.gameState.railroads[propId] ||
+                this.gameState.utilities[propId];
+            if (prop) {
+                prop.owner = player.id;
+                fromPlayer.properties = fromPlayer.properties.filter(
+                    (id) => id !== propId
+                );
+                player.properties.push(propId);
+            }
+        });
+        trade.requestedProperties.forEach((propId) => {
+            const prop =
+                this.gameState.properties[propId] ||
+                this.gameState.railroads[propId] ||
+                this.gameState.utilities[propId];
+            if (prop) {
+                prop.owner = fromPlayer.id;
+                player.properties = player.properties.filter(
+                    (id) => id !== propId
+                );
+                fromPlayer.properties.push(propId);
+            }
+        });
+
+        fromPlayer.money -= trade.offeredMoney;
+        player.money += trade.offeredMoney;
+        player.money -= trade.requestedMoney;
+        fromPlayer.money += trade.requestedMoney;
+
+        this.gameState.gameLog.push({
+            time: new Date().toLocaleTimeString(),
+            text: `${player.name} accepted the trade with ${fromPlayer.name}.`,
+        });
+        this.gameState.currentTrade = null;
+        this.io.to(this.roomId).emit("trade_accepted", { trade });
+    }
+
+    rejectTrade(player: Player) {
+        const trade = this.gameState.currentTrade;
+        if (!trade || trade.toPlayerId !== player.id) {
+            return this.socket.emit("error", {
+                message: "No active trade proposal for you to reject.",
+            });
+        }
+        const proposer = this.gameState.players.find(
+            (p) => p.id === trade.fromPlayerId
+        );
+        if (proposer) {
+            this.gameState.gameLog.push({
+                time: new Date().toLocaleTimeString(),
+                text: `${player.name} rejected the trade proposed by ${proposer.name}.`,
+            });
+        }
+        this.gameState.currentTrade = null;
+        this.io.to(this.roomId).emit("trade_rejected", { trade });
+    }
+
+    buyHouse(player: Player, propertyId: number) {
+        const property = this.gameState.properties[propertyId];
+        if (
+            property &&
+            property.owner === player.id &&
+            !property.isMortgaged &&
+            player.money >= property.housePrice
+        ) {
+            if (!this.hasMonopoly(player, property.group)) {
+                return this.socket.emit("error", {
+                    message:
+                        "You must own all properties in this group to build houses.",
+                });
+            }
+            const groupProperties = this.getGroupProperties(property.group);
+            const minHouses = Math.min(...groupProperties.map((p) => p.houses));
+            if (property.houses > minHouses) {
+                return this.socket.emit("error", {
+                    message:
+                        "You must build houses evenly across the property group.",
+                });
+            }
+            if (property.houses < 5) {
+                property.houses++;
+                player.money -= property.housePrice;
+                this.gameState.gameLog.push({
+                    time: new Date().toLocaleTimeString(),
+                    text: `${player.name} bought a ${
+                        property.houses === 5 ? "hotel" : "house"
+                    } on ${property.name}.`,
+                });
+            } else {
+                return this.socket.emit("error", {
+                    message: "Cannot build more on this property.",
+                });
+            }
+        } else {
+            return this.socket.emit("error", {
+                message: "Cannot buy a house on this property.",
+            });
+        }
+    }
+
+    sellHouse(player: Player, propertyId: number) {
+        const property = this.gameState.properties[propertyId];
+        if (property && property.owner === player.id && property.houses > 0) {
+            const groupProperties = this.getGroupProperties(property.group);
+            const maxHouses = Math.max(...groupProperties.map((p) => p.houses));
+            if (property.houses < maxHouses) {
+                return this.socket.emit("error", {
+                    message:
+                        "You must sell houses evenly across the property group.",
+                });
+            }
+            property.houses--;
+            player.money += property.housePrice / 2;
+            this.gameState.gameLog.push({
+                time: new Date().toLocaleTimeString(),
+                text: `${player.name} sold a ${
+                    property.houses === 4 ? "hotel" : "house"
+                } on ${property.name}.`,
+            });
+        } else {
+            return this.socket.emit("error", {
+                message: "Cannot sell a house from this property.",
+            });
+        }
+    }
+
+    mortgageProperty(player: Player, propertyId: number) {
+        const property =
+            this.gameState.properties[propertyId] ||
+            this.gameState.railroads[propertyId] ||
+            this.gameState.utilities[propertyId];
+        if (
+            property &&
+            property.owner === player.id &&
+            !property.isMortgaged &&
+            (!property.houses || property.houses === 0)
+        ) {
+            property.isMortgaged = true;
+            player.money += property.mortgageValue;
+            this.gameState.gameLog.push({
+                time: new Date().toLocaleTimeString(),
+                text: `${player.name} mortgaged ${property.name}.`,
+            });
+        } else {
+            return this.socket.emit("error", {
+                message: "Cannot mortgage this property.",
+            });
+        }
+    }
+
+    unmortgageProperty(player: Player, propertyId: number) {
+        const property =
+            this.gameState.properties[propertyId] ||
+            this.gameState.railroads[propertyId] ||
+            this.gameState.utilities[propertyId];
+        const cost = property.mortgageValue * 1.1;
+        if (
+            property &&
+            property.owner === player.id &&
+            property.isMortgaged &&
+            player.money >= cost
+        ) {
+            property.isMortgaged = false;
+            player.money -= cost;
+            this.gameState.gameLog.push({
+                time: new Date().toLocaleTimeString(),
+                text: `${player.name} unmortgaged ${property.name}.`,
+            });
+        } else {
+            return this.socket.emit("error", {
+                message: "Cannot unmortgage this property.",
+            });
+        }
+    }
+
+    payJailFine(player: Player) {
+        if (player.inJail) {
+            player.money -= 50;
+            player.inJail = false;
+            player.jailTurns = 0;
+            this.gameState.gameLog.push({
+                time: new Date().toLocaleTimeString(),
+                text: `${player.name} paid 50 credits to get out of jail.`,
+            });
+            this.handleBankruptcy(player);
+            this.gameState.hasRolled = false;
+        }
+    }
+
+    useJailCard(player: Player) {
+        if (player.inJail && player.getOutOfJailFreeCards > 0) {
+            player.getOutOfJailFreeCards--;
+            player.inJail = false;
+            player.jailTurns = 0;
+            this.gameState.gameLog.push({
+                time: new Date().toLocaleTimeString(),
+                text: `${player.name} used a Get Out of Jail Free card.`,
+            });
+            this.gameState.hasRolled = false;
+        }
+    }
 }
 
 app.prepare().then(() => {
@@ -482,206 +1341,6 @@ app.prepare().then(() => {
             methods: ["GET", "POST"],
         },
     });
-
-    // --- Game Logic Helpers ---
-
-    const handleBankruptcy = (gameState: GameState, player: Player) => {
-        if (player.money < 0) {
-            player.bankrupt = true;
-            gameState.gameLog.push({
-                time: new Date().toLocaleTimeString(),
-                text: `${player.name} has gone bankrupt!`,
-            });
-            const activePlayers = gameState.players.filter((p) => !p.bankrupt);
-            if (activePlayers.length === 1) {
-                gameState.gameWon = true;
-                gameState.winner = activePlayers[0];
-                gameState.gameLog.push({
-                    time: new Date().toLocaleTimeString(),
-                    text: `${activePlayers[0].name} has won the game!`,
-                });
-            }
-        }
-    };
-
-    const payRent = (gameState: GameState, player: Player, property: any) => {
-        const owner = gameState.players.find((p) => p.id === property.owner);
-
-        if (!owner || owner.id === player.id) return;
-        let rentAmount = 0;
-        if (property.group === "railroad") {
-            const railroadCount = owner.properties.filter(
-                (pId) => gameState.railroads[pId]
-            ).length;
-            rentAmount = 25 * Math.pow(2, railroadCount - 1);
-        } else if (property.group === "utility") {
-            const utilityCount = owner.properties.filter(
-                (pId) => gameState.utilities[pId]
-            ).length;
-            const lastRollTotal = gameState.lastRoll[0] + gameState.lastRoll[1];
-            rentAmount =
-                utilityCount === 1 ? lastRollTotal * 4 : lastRollTotal * 10;
-        } else {
-            rentAmount = property.rent[property.houses];
-        }
-        player.money -= rentAmount;
-        owner.money += rentAmount;
-        gameState.gameLog.push({
-            time: new Date().toLocaleTimeString(),
-            text: `${player.name} paid ${rentAmount} in rent to ${owner.name}.`,
-        });
-        handleBankruptcy(gameState, player);
-    };
-
-    const handleCardAction = (
-        gameState: GameState,
-        player: Player,
-        card: Card
-    ) => {
-        gameState.gameLog.push({
-            time: new Date().toLocaleTimeString(),
-            text: `${player.name} drew: "${card.text}"`,
-        });
-        switch (card.action.type) {
-            case "move":
-                player.position = card.action.position!;
-                break;
-            case "move_nearest":
-                const groupSquares = squares
-                    .map((s, i) => ({ ...s, position: i }))
-                    .filter((s) => s.group === card.action.group);
-                let minDistance = 40;
-                let nearestSquare: (Square & { position: number }) | null =
-                    null;
-                for (const square of groupSquares) {
-                    let distance = square.position - player.position;
-                    if (distance < 0) {
-                        distance += 40;
-                    }
-                    if (distance < minDistance) {
-                        minDistance = distance;
-                        nearestSquare = square;
-                    }
-                }
-                if (nearestSquare) {
-                    player.position = nearestSquare.position;
-                }
-                break;
-            case "move_by":
-                player.position += card.action.amount!;
-                break;
-            case "collect":
-                player.money += card.action.amount!;
-                break;
-            case "pay":
-                player.money -= card.action.amount!;
-                handleBankruptcy(gameState, player);
-                break;
-            case "go_to_jail":
-                player.position = 10;
-                player.inJail = true;
-                break;
-            case "get_out_of_jail_free":
-                player.getOutOfJailFreeCards =
-                    (player.getOutOfJailFreeCards || 0) + 1;
-                break;
-            case "pay_per_building":
-                let houses = 0;
-                let hotels = 0;
-                for (const propId of player.properties) {
-                    const property = gameState.properties[propId];
-                    if (property) {
-                        if (property.houses === 5) {
-                            hotels++;
-                        } else {
-                            houses += property.houses;
-                        }
-                    }
-                }
-                player.money -=
-                    houses * card.action.house! + hotels * card.action.hotel!;
-                handleBankruptcy(gameState, player);
-                break;
-            case "pay_each_player":
-                gameState.players.forEach((p) => {
-                    if (p.id !== player.id) {
-                        p.money += card.action.amount!;
-                        player.money -= card.action.amount!;
-                    }
-                });
-                handleBankruptcy(gameState, player);
-                break;
-            case "collect_from_each_player":
-                gameState.players.forEach((p) => {
-                    if (p.id !== player.id) {
-                        p.money -= card.action.amount!;
-                        player.money += card.action.amount!;
-                    }
-                });
-                break;
-        }
-    };
-
-    const handleSquareLanding = (
-        socket: Socket,
-        gameState: GameState,
-        player: Player
-    ) => {
-        const square = squares[player.position];
-        gameState.gameLog.push({
-            time: new Date().toLocaleTimeString(),
-            text: `${player.name} landed on ${square.name}`,
-        });
-        switch (square.type) {
-            case "property":
-            case "railroad":
-            case "utility":
-                const property =
-                    gameState.properties[player.position] ||
-                    gameState.railroads[player.position] ||
-                    gameState.utilities[player.position];
-                if (property.owner && property.owner !== player.id) {
-                    payRent(gameState, player, property);
-                } else if (!property.owner) {
-                    socket.emit("promptBuyOrAuction", {
-                        propertyId: player.position,
-                    });
-                }
-                break;
-            case "tax":
-                player.money -= square.amount!;
-                gameState.gameLog.push({
-                    time: new Date().toLocaleTimeString(),
-                    text: `${player.name} paid ${square.amount} in ${square.name}.`,
-                });
-                handleBankruptcy(gameState, player);
-                break;
-            case "go_to_jail":
-                player.position = 10;
-                player.inJail = true;
-                gameState.gameLog.push({
-                    time: new Date().toLocaleTimeString(),
-                    text: `${player.name} went to jail!`,
-                });
-                break;
-            case "chance":
-                const chanceCard = gameState.chanceCards.pop();
-                if (chanceCard) {
-                    socket.emit("cardDrawn", { card: chanceCard });
-                    handleCardAction(gameState, player, chanceCard);
-                    gameState.chanceCards.unshift(chanceCard);
-                }
-                break;
-            case "community_chest":
-                const communityChestCard = gameState.communityChestCards.pop();
-                if (communityChestCard) {
-                    socket.emit("cardDrawn", { card: communityChestCard });
-                    handleCardAction(gameState, player, communityChestCard);
-                    gameState.communityChestCards.unshift(communityChestCard);
-                }
-                break;
-        }
-    };
 
     io.on("connection", (socket: Socket) => {
         console.log("A user connected:", socket.id);
@@ -862,9 +1521,6 @@ app.prepare().then(() => {
                 action: PlayerAction;
                 address: string;
             }) => {
-                console.log(
-                    `Received player_action: ${action.type} from ${address} in room ${roomId}`
-                );
                 const { data: room, error } = await supabase
                     .from("rooms")
                     .select("game_state")
@@ -873,312 +1529,121 @@ app.prepare().then(() => {
                 if (error || !room) {
                     return socket.emit("error", { message: "Game not found." });
                 }
-                const gameState = room.game_state as GameState;
+
+                const gameManager = new MonopolyGameManager(
+                    room.game_state as GameState,
+                    socket,
+                    io,
+                    roomId
+                );
+                const { gameState } = gameManager;
                 const currentPlayer =
                     gameState.players[gameState.currentPlayerIndex];
 
-                // START_GAME is a special action that can be called before the game starts.
                 if (action.type === "START_GAME") {
-                    if (gameState.gameStarted) {
+                    if (gameState.gameStarted)
                         return socket.emit("error", {
                             message: "Game has already started.",
                         });
-                    }
-                    if (gameState.players[0].id !== address) {
+                    if (gameState.players[0].id !== address)
                         return socket.emit("error", {
                             message: "Only the host can start the game.",
                         });
-                    }
-                    if (gameState.players.length < 2) {
+                    if (gameState.players.length < 2)
                         return socket.emit("error", {
                             message: "Need at least 2 players to start.",
                         });
-                    }
                     gameState.gameStarted = true;
                     gameState.gameLog.push({
                         time: new Date().toLocaleTimeString(),
                         text: `The game has started! It is now ${currentPlayer.name}'s turn.`,
                     });
-                }
-                // BID is a special action that can be called by any player during an auction.
-                else if (action.type === "BID") {
+                } else if (action.type === "BID") {
+                    const bidder = gameState.players.find(
+                        (p) => p.id === address
+                    );
                     if (
                         gameState.auction &&
-                        action.payload.amount > gameState.auction.highestBid
+                        bidder &&
+                        action.payload.amount > gameState.auction.highestBid &&
+                        bidder.money >= action.payload.amount
                     ) {
-                        const bidder = gameState.players.find(
-                            (p) => p.id === address
-                        );
-                        if (bidder && bidder.money >= action.payload.amount) {
-                            gameState.auction.highestBid =
-                                action.payload.amount;
-                            gameState.auction.highestBidder = address;
-                            gameState.auction.timer = 10;
-                        }
+                        gameState.auction.highestBid = action.payload.amount;
+                        gameState.auction.highestBidder = address;
+                        gameState.auction.timer = 10;
                     }
-                }
-                // All other actions
-                else {
-                    if (!gameState.gameStarted) {
+                } else {
+                    if (!gameState.gameStarted)
                         return socket.emit("error", {
                             message: "The game has not started yet.",
                         });
-                    }
-                    if (currentPlayer.id !== address) {
+                    if (currentPlayer.id !== address)
                         return socket.emit("error", {
                             message: "It's not your turn.",
                         });
-                    }
 
                     switch (action.type) {
                         case "ROLL_DICE":
-                            console.log("Processing ROLL_DICE action");
-                            if (gameState.hasRolled)
-                                return socket.emit("error", {
-                                    message: "You have already rolled.",
-                                });
-                            const dice1 = Math.floor(Math.random() * 6) + 1;
-                            const dice2 = Math.floor(Math.random() * 6) + 1;
-                            const total = dice1 + dice2;
-                            const isDouble = dice1 === dice2;
-                            gameState.lastRoll = [dice1, dice2];
-                            io.to(roomId).emit("dice_rolled", {
-                                dice1,
-                                dice2,
-                                player: currentPlayer,
-                            });
-                            gameState.gameLog.push({
-                                time: new Date().toLocaleTimeString(),
-                                text: `${
-                                    currentPlayer.name
-                                } rolled a ${total} (${dice1}+${dice2})${
-                                    isDouble ? " (double)" : ""
-                                }`,
-                            });
-                            if (isDouble) gameState.doubleRollCount++;
-                            else gameState.doubleRollCount = 0;
-                            if (gameState.doubleRollCount === 3) {
-                                currentPlayer.inJail = true;
-                                currentPlayer.position = 10;
-                                gameState.doubleRollCount = 0;
-                                gameState.gameLog.push({
-                                    time: new Date().toLocaleTimeString(),
-                                    text: `${currentPlayer.name} rolled three doubles and went to jail!`,
-                                });
-                                gameState.currentPlayerIndex =
-                                    (gameState.currentPlayerIndex + 1) %
-                                    gameState.players.length;
-                                gameState.hasRolled = false;
-                            } else {
-                                const oldPosition = currentPlayer.position;
-                                const newPosition = (oldPosition + total) % 40;
-                                currentPlayer.position = newPosition;
-                                if (newPosition < oldPosition) {
-                                    currentPlayer.money += 200;
-                                    gameState.gameLog.push({
-                                        time: new Date().toLocaleTimeString(),
-                                        text: `${currentPlayer.name} passed GO and collected 200 credits.`,
-                                    });
-                                }
-                                handleSquareLanding(
-                                    socket,
-                                    gameState,
-                                    currentPlayer
-                                );
-                                if (!isDouble) gameState.hasRolled = true;
-                            }
+                            gameManager.rollDice(currentPlayer);
                             break;
                         case "BUY_PROPERTY":
-                            if (
-                                currentPlayer.position !==
+                            gameManager.buyProperty(
+                                currentPlayer,
                                 action.payload.propertyId
-                            ) {
-                                return socket.emit("error", {
-                                    message:
-                                        "You are not on the correct square to buy this property.",
-                                });
-                            }
-                            const property =
-                                gameState.properties[
-                                    action.payload.propertyId
-                                ] ||
-                                gameState.railroads[
-                                    action.payload.propertyId
-                                ] ||
-                                gameState.utilities[action.payload.propertyId];
-                            if (
-                                property &&
-                                !property.owner &&
-                                currentPlayer.money >= property.price
-                            ) {
-                                currentPlayer.money -= property.price;
-                                property.owner = currentPlayer.id;
-                                currentPlayer.properties.push(
-                                    action.payload.propertyId
-                                );
-                                gameState.gameLog.push({
-                                    time: new Date().toLocaleTimeString(),
-                                    text: `${currentPlayer.name} bought ${property.name}.`,
-                                });
-                            }
+                            );
                             break;
                         case "START_AUCTION":
-                            const auctionProperty =
-                                gameState.properties[
-                                    action.payload.propertyId
-                                ] ||
-                                gameState.railroads[
-                                    action.payload.propertyId
-                                ] ||
-                                gameState.utilities[action.payload.propertyId];
-                            if (auctionProperty && !auctionProperty.owner) {
-                                gameState.auction = {
-                                    propertyId: action.payload.propertyId,
-                                    highestBid: 0,
-                                    highestBidder: null,
-                                    timer: 10,
-                                };
-                                const auctionInterval = setInterval(
-                                    async () => {
-                                        if (gameState.auction) {
-                                            gameState.auction.timer--;
-                                            if (gameState.auction.timer <= 0) {
-                                                clearInterval(auctionInterval);
-                                                const winner =
-                                                    gameState.players.find(
-                                                        (p) =>
-                                                            p.id ===
-                                                            gameState.auction!
-                                                                .highestBidder
-                                                    );
-                                                if (winner) {
-                                                    const property =
-                                                        gameState.properties[
-                                                            gameState.auction!
-                                                                .propertyId
-                                                        ] ||
-                                                        gameState.railroads[
-                                                            gameState.auction!
-                                                                .propertyId
-                                                        ] ||
-                                                        gameState.utilities[
-                                                            gameState.auction!
-                                                                .propertyId
-                                                        ];
-                                                    winner.money -=
-                                                        gameState.auction!.highestBid;
-                                                    property.owner = winner.id;
-                                                    winner.properties.push(
-                                                        gameState.auction!
-                                                            .propertyId
-                                                    );
-                                                    gameState.gameLog.push({
-                                                        time: new Date().toLocaleTimeString(),
-                                                        text: `${
-                                                            winner.name
-                                                        } won the auction for ${
-                                                            property.name
-                                                        } for ${
-                                                            gameState.auction!
-                                                                .highestBid
-                                                        }.`,
-                                                    });
-                                                }
-                                                gameState.auction = null;
-                                            }
-                                            const { error: updateError } =
-                                                await supabase
-                                                    .from("rooms")
-                                                    .update({
-                                                        game_state:
-                                                            gameState as any,
-                                                    })
-                                                    .eq("id", roomId);
-                                            if (updateError) {
-                                                console.error(
-                                                    "Could not update game state after auction tick."
-                                                );
-                                            }
-                                        }
-                                    },
-                                    1000
-                                );
-                            }
-                            break;
-                        case "BUY_HOUSE":
-                            const houseProperty =
-                                gameState.properties[action.payload.propertyId];
-                            if (
-                                houseProperty &&
-                                houseProperty.owner === currentPlayer.id
-                            ) {
-                                houseProperty.houses++;
-                                currentPlayer.money -= houseProperty.housePrice;
-                                gameState.gameLog.push({
-                                    time: new Date().toLocaleTimeString(),
-                                    text: `${currentPlayer.name} bought a house on ${houseProperty.name}.`,
-                                });
-                            }
-                            break;
-                        case "TRADE":
-                            // Implement trade logic here
-                            break;
-                        case "PAY_JAIL_FINE":
-                            if (currentPlayer.inJail) {
-                                currentPlayer.money -= 50;
-                                currentPlayer.inJail = false;
-                                currentPlayer.jailTurns = 0;
-                                gameState.gameLog.push({
-                                    time: new Date().toLocaleTimeString(),
-                                    text: `${currentPlayer.name} paid a 50 credit fine to get out of jail.`,
-                                });
-                            }
-                            break;
-                        case "USE_JAIL_CARD":
-                            if (
-                                currentPlayer.inJail &&
-                                currentPlayer.getOutOfJailFreeCards > 0
-                            ) {
-                                currentPlayer.getOutOfJailFreeCards--;
-                                currentPlayer.inJail = false;
-                                currentPlayer.jailTurns = 0;
-                                gameState.gameLog.push({
-                                    time: new Date().toLocaleTimeString(),
-                                    text: `${currentPlayer.name} used a Get Out of Jail Free card.`,
-                                });
-                            }
+                            gameManager.startAuction(action.payload.propertyId);
                             break;
                         case "END_TURN":
-                            if (!gameState.hasRolled)
-                                return socket.emit("error", {
-                                    message:
-                                        "You must roll the dice before ending your turn.",
-                                });
-                            gameState.currentPlayerIndex =
-                                (gameState.currentPlayerIndex + 1) %
-                                gameState.players.length;
-                            gameState.hasRolled = false;
-                            gameState.gameLog.push({
-                                time: new Date().toLocaleTimeString(),
-                                text: `It is now ${
-                                    gameState.players[
-                                        gameState.currentPlayerIndex
-                                    ].name
-                                }'s turn.`,
-                            });
+                            gameManager.endTurn(currentPlayer);
+                            break;
+                        case "PROPOSE_TRADE":
+                            gameManager.proposeTrade(
+                                currentPlayer,
+                                action.payload
+                            );
+                            break;
+                        case "ACCEPT_TRADE":
+                            gameManager.acceptTrade(currentPlayer);
+                            break;
+                        case "REJECT_TRADE":
+                            gameManager.rejectTrade(currentPlayer);
+                            break;
+                        case "BUY_HOUSE":
+                            gameManager.buyHouse(
+                                currentPlayer,
+                                action.payload.propertyId
+                            );
+                            break;
+                        case "SELL_HOUSE":
+                            gameManager.sellHouse(
+                                currentPlayer,
+                                action.payload.propertyId
+                            );
+                            break;
+                        case "MORTGAGE_PROPERTY":
+                            gameManager.mortgageProperty(
+                                currentPlayer,
+                                action.payload.propertyId
+                            );
+                            break;
+                        case "UNMORTGAGE_PROPERTY":
+                            gameManager.unmortgageProperty(
+                                currentPlayer,
+                                action.payload.propertyId
+                            );
+                            break;
+                        case "PAY_JAIL_FINE":
+                            gameManager.payJailFine(currentPlayer);
+                            break;
+                        case "USE_JAIL_CARD":
+                            gameManager.useJailCard(currentPlayer);
                             break;
                     }
                 }
-                const { error: updateError } = await supabase
-                    .from("rooms")
-                    .update({ game_state: gameState as GameState })
-                    .eq("id", roomId);
-                if (updateError) {
-                    return socket.emit("error", {
-                        message: "Could not update game state.",
-                    });
-                }
-                io.to(roomId).emit("game_updated", { gameState });
+
+                await gameManager.updateSupabaseAndEmit();
             }
         );
 

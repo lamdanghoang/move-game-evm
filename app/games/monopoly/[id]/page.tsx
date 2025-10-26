@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { socket } from "@/lib/socketClient";
 import { useAccount } from "wagmi";
 import { GameState, Player } from "@/types";
+import { toast } from "sonner";
 
 interface DiceRolledData {
     dice1: number;
@@ -15,6 +16,10 @@ interface DiceRolledData {
 
 interface GameUpdateData {
     gameState: GameState;
+}
+
+interface ErrorData {
+    message: string;
 }
 
 const DEFAULT_LAST_ROLL: [number, number] = [1, 1];
@@ -51,12 +56,18 @@ const MonopolyRoomPage = () => {
             setPlayer(currentPlayer);
         };
 
+        const handleError = (data: ErrorData) => {
+            toast.error(data.message);
+        };
+
         socket.on("dice_rolled", handleDiceRolled);
         socket.on("game_updated", handleGameUpdate);
+        socket.on("error", handleError);
 
         return () => {
             socket.off("dice_rolled", handleDiceRolled);
             socket.off("game_updated", handleGameUpdate);
+            socket.off("error", handleError);
         };
     }, [address]);
 

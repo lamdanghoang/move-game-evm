@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Player } from "@/types";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface PlayerStatsProps {
     players: Player[];
@@ -97,12 +98,12 @@ const PlayerStats: React.FC<PlayerStatsProps> = ({
                                 {player.position}
                             </span>
                         </div>
-                        <button
+                        <Button
                             onClick={() => onTrade(player)}
-                            className="text-xs bg-cyan-500 text-white px-2 py-1 rounded mt-2"
+                            className="text-sm bg-cyan-500 text-white px-2 py-1 rounded mt-2"
                         >
                             Trade
-                        </button>
+                        </Button>
                     </motion.div>
                 </AnimatePresence>
                 {canNavigate && (
