@@ -17,6 +17,9 @@ import GameLog from "../../games/monopoly/components/GameLog";
 import { socket } from "@/lib/socketClient";
 import { useParams } from "next/navigation";
 import { useAccount } from "wagmi";
+import AuctionModal from "../../games/monopoly/components/AuctionModal";
+import BuyOrAuctionModal from "../../games/monopoly/components/BuyOrAuctionModal";
+import { Button } from "@/components/ui/button";
 
 type MoveAnimation = {
     playerId: string;
@@ -30,17 +33,22 @@ const MonopolyGame = ({
     isAnimating,
     setIsAnimating,
     lastRollResult,
+    buyOrAuctionPropertyId,
+    clearBuyOrAuction,
 }: {
     gameState: GameState;
     player: Player | undefined;
     isAnimating: boolean;
     setIsAnimating: (state: boolean) => void;
     lastRollResult: [number, number] | null;
+    buyOrAuctionPropertyId: number | null;
+    clearBuyOrAuction: () => void;
 }) => {
     const params = useParams();
     const { id: roomId } = params;
     const { address } = useAccount();
     const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
+
     // const [shouldAnimateDice, setShouldAnimateDice] = useState(false);
 
     // const onDiceAnimationComplete = useCallback(() => {
@@ -213,6 +221,15 @@ const MonopolyGame = ({
         setRecentlyPurchasedId(propertyId);
     };
 
+    const handleStartAuction = (propertyId: number) => {
+        socket.emit("player_action", {
+            roomId,
+            action: { type: "START_AUCTION", payload: { propertyId } },
+            address,
+        });
+        clearBuyOrAuction();
+    };
+
     const handleBuyHouse = (propertyId: number) => {
         socket.emit("player_action", {
             roomId,
@@ -258,6 +275,14 @@ const MonopolyGame = ({
             address,
         });
         setIsTradeModalOpen(false);
+    };
+
+    const handlePlaceBid = (amount: number) => {
+        socket.emit("player_action", {
+            roomId,
+            action: { type: "BID", payload: { amount } },
+            address,
+        });
     };
 
     const handlePayJailFine = () => {
@@ -409,12 +434,12 @@ const MonopolyGame = ({
                 {!gameState.gameStarted ? (
                     <div>
                         {player?.id === gameState.players[0].id ? (
-                            <button
+                            <Button
                                 onClick={handleStartGame}
-                                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-8 rounded-lg text-2xl z-10"
+                                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-linear-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-bold py-6 px-8 rounded-lg text-2xl z-10 shadow-lg transform hover:scale-105 transition-all duration-300"
                             >
                                 Start Game
-                            </button>
+                            </Button>
                         ) : (
                             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-xl flex flex-col items-center gap-4">
                                 <svg
@@ -488,6 +513,35 @@ const MonopolyGame = ({
                 onTrade={onTrade}
                 currentPlayer={currentPlayer!}
             />
+            {buyOrAuctionPropertyId !== null && !isAnimating && (
+                <BuyOrAuctionModal
+                    property={
+                        gameState.properties[buyOrAuctionPropertyId] ||
+                        gameState.railroads[buyOrAuctionPropertyId] ||
+                        gameState.utilities[buyOrAuctionPropertyId]
+                    }
+                    onBuy={() => {
+                        handleBuyProperty(buyOrAuctionPropertyId);
+                        clearBuyOrAuction();
+                    }}
+                    onAuction={() => {
+                        handleStartAuction(buyOrAuctionPropertyId);
+                        clearBuyOrAuction();
+                    }}
+                />
+            )}
+            {gameState.auction && (
+                <AuctionModal
+                    auction={gameState.auction}
+                    property={
+                        gameState.properties[gameState.auction.propertyId] ||
+                        gameState.railroads[gameState.auction.propertyId] ||
+                        gameState.utilities[gameState.auction.propertyId]
+                    }
+                    onPlaceBid={handlePlaceBid}
+                    playerBalance={player?.money || 0}
+                />
+            )}
             <AnimatePresence>
                 {(buildingPropertyId !== null ||
                     recentlyPurchasedId !== null) &&

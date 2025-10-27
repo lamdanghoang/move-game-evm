@@ -71,12 +71,7 @@ export interface GameState {
     doubleRollCount: number;
     lastRoll: [number, number];
     hasRolled: boolean;
-    auction: {
-        propertyId: number;
-        highestBid: number;
-        highestBidder: string | null;
-        timer: number;
-    } | null;
+    auction: Auction | null;
     properties: { [key: number]: Property };
     railroads: { [key: number]: Railroad };
     utilities: { [key: number]: Utility };
@@ -84,6 +79,14 @@ export interface GameState {
     communityChestCards: Card[];
     gameLog: GameEvent[];
     currentTrade: TradeDetails | null;
+}
+
+export interface Auction {
+    propertyId: number;
+    highestBid: number;
+    highestBidder: string | null;
+    highestBidderName: string | null;
+    timer: number;
 }
 
 export interface TradeDetails {

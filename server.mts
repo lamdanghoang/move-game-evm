@@ -982,6 +982,7 @@ class MonopolyGameManager {
                 propertyId,
                 highestBid: 0,
                 highestBidder: null,
+                highestBidderName: null,
                 timer: 10,
             };
             this.gameState.gameLog.push({
@@ -994,6 +995,24 @@ class MonopolyGameManager {
             }
 
             const interval = setInterval(async () => {
+                const { data: room, error } = await supabase
+                    .from("rooms")
+                    .select("game_state")
+                    .eq("id", this.roomId)
+                    .single();
+
+                if (error || !room) {
+                    clearInterval(interval);
+                    activeAuctionIntervals.delete(this.roomId);
+                    console.error(
+                        "Could not fetch game state in auction interval.",
+                        error
+                    );
+                    return;
+                }
+
+                this.gameState = room.game_state as GameState;
+
                 if (!this.gameState.auction) {
                     clearInterval(interval);
                     activeAuctionIntervals.delete(this.roomId);
@@ -1015,7 +1034,7 @@ class MonopolyGameManager {
     private resolveAuction() {
         if (!this.gameState.auction) return;
 
-        const { propertyId, highestBid, highestBidder } =
+        const { propertyId, highestBid, highestBidder, highestBidderName } =
             this.gameState.auction;
         const property =
             this.gameState.properties[propertyId] ||
@@ -1032,7 +1051,7 @@ class MonopolyGameManager {
                 winner.properties.push(propertyId);
                 this.gameState.gameLog.push({
                     time: new Date().toLocaleTimeString(),
-                    text: `${winner.name} won the auction for ${property.name} for ${highestBid}.`,
+                    text: `${highestBidderName} won the auction for ${property.name} for ${highestBid}.`,
                 });
                 this.handleBankruptcy(winner);
             }
@@ -1430,23 +1449,58 @@ app.prepare().then(() => {
                 roomId: string;
                 address: string;
             }) => {
-                const { data: room, error } = await supabase
+                const { data: room, error: roomError } = await supabase
                     .from("rooms")
                     .select("*, room_players(*)")
                     .eq("id", roomId)
                     .single();
-                if (error || !room) {
+
+                if (roomError || !room) {
                     return socket.emit("error", { message: "Game not found." });
                 }
+
                 const playerExists = room.room_players.some(
                     (p: RoomPlayer) => p.user_id === address
                 );
+
                 if (!playerExists) {
                     if (room.room_players.length >= 4) {
                         return socket.emit("error", {
                             message: "This game is full.",
                         });
                     }
+
+                    const { error: playerError } = await supabase
+                        .from("room_players")
+                        .insert([
+                            {
+                                room_id: roomId,
+                                user_id: address,
+                                player_order: room.room_players.length + 1,
+                            },
+                        ]);
+
+                    if (playerError) {
+                        if (playerError.code === '23505') { // Unique violation
+                            // Player already exists, fetch the latest game state and send it
+                            const { data: currentRoom, error: currentRoomError } = await supabase
+                                .from("rooms")
+                                .select("game_state")
+                                .eq("id", roomId)
+                                .single();
+
+                            if (currentRoomError || !currentRoom) {
+                                return socket.emit("error", { message: "Game not found." });
+                            }
+                            socket.join(roomId);
+                            return socket.emit("game_updated", { gameState: currentRoom.game_state });
+                        } else {
+                            return socket.emit("error", {
+                                message: "Could not add player to game.",
+                            });
+                        }
+                    }
+
                     const playerColors = [
                         "#00ff88",
                         "#ff0088",
@@ -1471,42 +1525,27 @@ app.prepare().then(() => {
                         time: new Date().toLocaleTimeString(),
                         text: `${newPlayer.name} has joined the game.`,
                     });
-                    const { error: updateError, data: updatedRoom } =
+                    const { error: updateError } =
                         await supabase
                             .from("rooms")
                             .update({ game_state: gameState as any })
-                            .eq("id", roomId)
-                            .select();
+                            .eq("id", roomId);
+
                     if (updateError) {
                         return socket.emit("error", {
                             message: "Could not update game state.",
                         });
                     }
-                    room.game_state = updatedRoom[0].game_state;
-                    const { error: playerError } = await supabase
-                        .from("room_players")
-                        .insert([
-                            {
-                                room_id: roomId,
-                                user_id: address,
-                                player_order: room.room_players.length + 1,
-                            },
-                        ]);
-                    if (playerError) {
-                        return socket.emit("error", {
-                            message: "Could not add player to game.",
-                        });
-                    }
+
                     const playersInRoom = roomPlayers.get(roomId) || [];
                     roomPlayers.set(roomId, [...playersInRoom, address]);
                     io.to(roomId).emit("game_updated", {
-                        gameState: room.game_state,
+                        gameState: gameState,
                     });
-                } else {
-                    socket.join(roomId);
-                    socket.emit("game_updated", { gameState: room.game_state });
                 }
+
                 socket.join(roomId);
+                socket.emit("game_updated", { gameState: room.game_state });
             }
         );
 
@@ -1562,15 +1601,31 @@ app.prepare().then(() => {
                     const bidder = gameState.players.find(
                         (p) => p.id === address
                     );
-                    if (
-                        gameState.auction &&
-                        bidder &&
-                        action.payload.amount > gameState.auction.highestBid &&
-                        bidder.money >= action.payload.amount
+                    let error = null;
+                    if (!gameState.auction) {
+                        error = "There is no active auction.";
+                    } else if (!bidder) {
+                        error = "Player not found.";
+                    } else if (
+                        action.payload.amount <= gameState.auction.highestBid
                     ) {
-                        gameState.auction.highestBid = action.payload.amount;
-                        gameState.auction.highestBidder = address;
-                        gameState.auction.timer = 10;
+                        error =
+                            "Your bid must be higher than the current highest bid.";
+                    } else if (bidder.money < action.payload.amount) {
+                        error =
+                            "You do not have enough money to place this bid.";
+                    }
+
+                    if (error) {
+                        socket.emit("error", { message: error });
+                    } else {
+                        if (gameState.auction && bidder) {
+                            gameState.auction.highestBid =
+                                action.payload.amount;
+                            gameState.auction.highestBidder = address;
+                            gameState.auction.highestBidderName = bidder.name;
+                            gameState.auction.timer = 10;
+                        }
                     }
                 } else {
                     if (!gameState.gameStarted)

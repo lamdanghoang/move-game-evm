@@ -34,6 +34,7 @@ const MonopolyRoomPage = () => {
     const [lastRollResult, setLastRollResult] = useState<
         [number, number] | null
     >(DEFAULT_LAST_ROLL);
+    const [buyOrAuctionPropertyId, setBuyOrAuctionPropertyId] = useState<number | null>(null);
 
     useEffect(() => {
         if (roomId && address) {
@@ -56,17 +57,23 @@ const MonopolyRoomPage = () => {
             setPlayer(currentPlayer);
         };
 
+        const handlePromptBuyOrAuction = (data: { propertyId: number }) => {
+            setBuyOrAuctionPropertyId(data.propertyId);
+        };
+
         const handleError = (data: ErrorData) => {
             toast.error(data.message);
         };
 
         socket.on("dice_rolled", handleDiceRolled);
         socket.on("game_updated", handleGameUpdate);
+        socket.on("promptBuyOrAuction", handlePromptBuyOrAuction);
         socket.on("error", handleError);
 
         return () => {
             socket.off("dice_rolled", handleDiceRolled);
             socket.off("game_updated", handleGameUpdate);
+            socket.off("promptBuyOrAuction", handlePromptBuyOrAuction);
             socket.off("error", handleError);
         };
     }, [address]);
@@ -82,6 +89,8 @@ const MonopolyRoomPage = () => {
             isAnimating={isAnimating}
             setIsAnimating={setIsAnimating}
             lastRollResult={lastRollResult}
+            buyOrAuctionPropertyId={buyOrAuctionPropertyId}
+            clearBuyOrAuction={() => setBuyOrAuctionPropertyId(null)}
         />
     );
 };
