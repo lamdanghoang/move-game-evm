@@ -537,6 +537,7 @@ const MonopolyGame = ({
                         currentPropertyId={
                             isPropertyBuyable ? currentPropertyId : null
                         }
+                        gameWon={gameState.gameWon}
                     />
                 )}
             </div>

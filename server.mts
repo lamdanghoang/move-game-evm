@@ -1417,6 +1417,10 @@ app.prepare().then(() => {
                         return socket.emit("error", {
                             message: "The game has not started yet.",
                         });
+                    if (gameState.gameWon)
+                        return socket.emit("error", {
+                            message: "The game is over.",
+                        });
                     if (currentPlayer.id !== address)
                         return socket.emit("error", {
                             message: "It's not your turn.",

@@ -15,6 +15,7 @@ interface ControlsProps {
     getOutOfJailFreeCards: number;
     isCurrentPlayerTurn: boolean;
     currentPropertyId: number | null;
+    gameWon: boolean;
 }
 
 const Controls: React.FC<ControlsProps> = ({
@@ -29,6 +30,7 @@ const Controls: React.FC<ControlsProps> = ({
     getOutOfJailFreeCards,
     isCurrentPlayerTurn,
     currentPropertyId,
+    gameWon,
 }) => {
     const dice1Ref = useRef<DiceRef>(null);
     const dice2Ref = useRef<DiceRef>(null);
@@ -68,13 +70,21 @@ const Controls: React.FC<ControlsProps> = ({
                         <Button
                             className="btn rollDiceBtn"
                             onClick={() => handleAction(onRollDice)}
-                            disabled={hasRolled}
+                            disabled={hasRolled || gameWon}
                         >
                             Roll for Double
                         </Button>
-                        <Button onClick={() => handleAction(onPayJailFine)}>Pay 50 Fine</Button>
+                        <Button
+                            onClick={() => handleAction(onPayJailFine)}
+                            disabled={gameWon}
+                        >
+                            Pay 50 Fine
+                        </Button>
                         {getOutOfJailFreeCards > 0 && (
-                            <Button onClick={() => handleAction(onUseJailCard)}>
+                            <Button
+                                onClick={() => handleAction(onUseJailCard)}
+                                disabled={gameWon}
+                            >
                                 Use Get Out of Jail Free Card ({getOutOfJailFreeCards})
                             </Button>
                         )}
@@ -84,7 +94,7 @@ const Controls: React.FC<ControlsProps> = ({
                         <Button
                             className={`btn rollDiceBtn`}
                             onClick={() => handleAction(onRollDice)}
-                            disabled={hasRolled}
+                            disabled={hasRolled || gameWon}
                         >
                             Roll Dice
                         </Button>
@@ -97,13 +107,13 @@ const Controls: React.FC<ControlsProps> = ({
                                         }
                                     })
                                 }
-                                disabled={currentPropertyId === null}
+                                disabled={currentPropertyId === null || gameWon}
                             >
                                 Buy Property
                             </Button>
                             <Button
                                 onClick={() => handleAction(onEndTurn)}
-                                disabled={!hasRolled}
+                                disabled={!hasRolled || gameWon}
                             >
                                 End Turn
                             </Button>
