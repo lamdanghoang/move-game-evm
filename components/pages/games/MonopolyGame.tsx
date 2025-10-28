@@ -489,7 +489,7 @@ const MonopolyGame = ({
                 )}
             </div>
             <div className="flex flex-col gap-4 overflow-y-auto h-screen scroll-hide">
-                <Chat messages={[]} />
+                <Chat currentPlayer={player} />
                 <GameLog events={delayedGameLog} />
                 <StoryEvents />
                 <GameAnalytics />
@@ -509,7 +509,11 @@ const MonopolyGame = ({
                 isOpen={isTradeModalOpen}
                 onClose={() => setIsTradeModalOpen(false)}
                 players={gameState.players}
-                properties={gameState.properties}
+                properties={{
+                    ...gameState.properties,
+                    ...gameState.railroads,
+                    ...gameState.utilities,
+                }}
                 onTrade={onTrade}
                 currentPlayer={currentPlayer!}
             />

@@ -27,7 +27,11 @@
         "**/*.ts",
         "**/*.tsx",
         ".next/types/**/*.ts",
-        "server.mts"
+        "server.mts",
+        "constants/game.mts",
+        "lib/card-handler.mts",
+        "lib/game-logic.mts",
+        "lib/square-handler.mts"
     ],
     "exclude": ["node_modules"]
 }

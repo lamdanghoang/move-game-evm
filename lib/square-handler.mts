@@ -1,12 +1,19 @@
-import { GameState, Player, Property, Railroad, Square, Utility } from "../types";
-import { JAIL_POSITION, SquareType } from "../constants/game.js";
-import { handleBankruptcy, payRent } from "./game-logic.js";
-import { handleCardAction } from "./card-handler.js";
+import {
+    GameState,
+    Player,
+    Property,
+    Railroad,
+    Square,
+    Utility,
+} from "../types";
+import { JAIL_POSITION, SquareType } from "../constants/game.mjs";
+import { handleBankruptcy, payRent } from "./game-logic.mjs";
+import { handleCardAction } from "./card-handler.mjs";
 import { Socket } from "socket.io";
 
 export function handleSquareLanding(
-    gameState: GameState, 
-    player: Player, 
+    gameState: GameState,
+    player: Player,
     squares: (Square & { position: number })[],
     endTurn: (player: Player) => void,
     options: { isCardMove?: boolean } = {},
@@ -20,7 +27,7 @@ export function handleSquareLanding(
     switch (square.type) {
         case SquareType.PROPERTY:
         case SquareType.RAILROAD:
-        case SquareType.UTILITY:{
+        case SquareType.UTILITY: {
             const propertyFromState =
                 gameState.properties[player.position] ??
                 gameState.railroads[player.position] ??
@@ -28,14 +35,23 @@ export function handleSquareLanding(
 
             if (!propertyFromState) break;
 
-            let propertyForRent: (Property | Railroad | Utility) & { group: string };
+            let propertyForRent: (Property | Railroad | Utility) & {
+                group: string;
+            };
 
             if (square.type === SquareType.PROPERTY) {
                 propertyForRent = propertyFromState as Property;
             } else if (square.type === SquareType.RAILROAD) {
-                propertyForRent = { ...(propertyFromState as Railroad), group: square.type };
-            } else { // UTILITY
-                propertyForRent = { ...(propertyFromState as Utility), group: square.type };
+                propertyForRent = {
+                    ...(propertyFromState as Railroad),
+                    group: square.type,
+                };
+            } else {
+                // UTILITY
+                propertyForRent = {
+                    ...(propertyFromState as Utility),
+                    group: square.type,
+                };
             }
 
             if (propertyForRent.owner && propertyForRent.owner !== player.id) {
@@ -68,14 +84,19 @@ export function handleSquareLanding(
             const chanceCard = gameState.chanceCards.pop();
             if (chanceCard) {
                 socket?.emit("cardDrawn", { card: chanceCard });
-                const turnEnded = handleCardAction(gameState, player, chanceCard, squares, endTurn);
+                const turnEnded = handleCardAction(
+                    gameState,
+                    player,
+                    chanceCard,
+                    squares,
+                    endTurn
+                );
                 gameState.chanceCards.unshift(chanceCard);
                 return turnEnded;
             }
             break;
         case SquareType.COMMUNITY_CHEST:
-            const communityChestCard =
-                gameState.communityChestCards.pop();
+            const communityChestCard = gameState.communityChestCards.pop();
             if (communityChestCard) {
                 socket?.emit("cardDrawn", { card: communityChestCard });
                 const turnEnded = handleCardAction(
@@ -85,9 +106,7 @@ export function handleSquareLanding(
                     squares,
                     endTurn
                 );
-                gameState.communityChestCards.unshift(
-                    communityChestCard
-                );
+                gameState.communityChestCards.unshift(communityChestCard);
                 return turnEnded;
             }
             break;

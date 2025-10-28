@@ -1,5 +1,5 @@
 import { GameState, Player, Property, Railroad, Utility } from "../types";
-import { PropertyGroup } from "../constants/game.js";
+import { PropertyGroup } from "../constants/game.mjs";
 
 export function getGroupProperties(gameState: GameState, group: string) {
     return Object.values(gameState.properties).filter(

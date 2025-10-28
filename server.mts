@@ -22,13 +22,13 @@ import {
     MAX_JAIL_TURNS,
     TOTAL_SQUARES,
     UNMORTGAGE_INTEREST,
-} from "./constants/game.js";
+} from "./constants/game.mjs";
 import {
     handleBankruptcy,
     hasMonopoly,
     getGroupProperties,
-} from "./lib/game-logic.js";
-import { handleSquareLanding } from "./lib/square-handler.js";
+} from "./lib/game-logic.mjs";
+import { handleSquareLanding } from "./lib/square-handler.mjs";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!;
@@ -1480,6 +1480,10 @@ app.prepare().then(() => {
                 await gameManager.updateSupabaseAndEmit();
             }
         );
+
+        socket.on('send_chat_message', ({ roomId, message }) => {
+            io.to(roomId).emit('chat_message', message);
+        });
 
         socket.on("disconnect", () => {
             console.log("User disconnected:", socket.id);

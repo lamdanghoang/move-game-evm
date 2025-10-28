@@ -1,15 +1,17 @@
-import { Player, Property, TradeDetails } from "@/types";
+import { Player, Property, Railroad, Utility, TradeDetails } from "@/types";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+type OwnableAsset = Property | Railroad | Utility;
+
 interface TradeModalProps {
     isOpen: boolean;
     onClose: () => void;
     players: Player[];
-    properties: { [key: number]: Property };
+    properties: { [key: number]: OwnableAsset };
     onTrade: (tradeDetails: TradeDetails) => void;
     currentPlayer: Player;
 }

@@ -1,7 +1,7 @@
-import { GameState, Player, Card, Square } from "../types";
-import { GO_MONEY, JAIL_POSITION, TOTAL_SQUARES } from "../constants/game.js";
-import { handleBankruptcy } from "./game-logic.js";
-import { handleSquareLanding } from "./square-handler.js";
+import { GameState, Player, Card, Square } from "../types/index.js";
+import { GO_MONEY, JAIL_POSITION, TOTAL_SQUARES } from "../constants/game.mjs";
+import { handleBankruptcy } from "./game-logic.mjs";
+import { handleSquareLanding } from "./square-handler.mjs";
 
 export function handleCardAction(
     gameState: GameState,
