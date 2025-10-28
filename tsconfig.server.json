@@ -8,5 +8,5 @@
         "noEmit": false,
         "isolatedModules": false
     },
-    "include": ["server.mts"]
+    "include": ["server.mts", "constants/**/*.ts", "lib/**/*.ts"]
 }
