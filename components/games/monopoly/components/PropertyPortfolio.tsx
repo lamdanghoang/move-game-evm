@@ -9,6 +9,7 @@ interface PropertyPortfolioProps {
     properties: { [key: number]: OwnableProperty };
     onBuyHouse: (propertyId: number) => void;
     isCurrentPlayerTurn: boolean;
+    onManageAssets: () => void;
 }
 
 const PropertyPortfolio = ({
@@ -16,6 +17,7 @@ const PropertyPortfolio = ({
     properties,
     onBuyHouse,
     isCurrentPlayerTurn,
+    onManageAssets,
 }: PropertyPortfolioProps) => {
     const playerProperties = player.properties
         .map((id) => properties[id])
@@ -95,6 +97,9 @@ const PropertyPortfolio = ({
                 <span>Total Value:</span>
                 <span>{totalValue} Credits</span>
             </div>
+            <Button onClick={onManageAssets} className="w-full mt-2">
+                Manage Assets
+            </Button>
         </div>
     );
 };

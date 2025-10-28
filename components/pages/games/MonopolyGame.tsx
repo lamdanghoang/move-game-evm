@@ -48,6 +48,7 @@ const MonopolyGame = ({
     const { id: roomId } = params;
     const { address } = useAccount();
     const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
+    const [showManageAssetsModal, setShowManageAssetsModal] = useState(false);
 
     // const [shouldAnimateDice, setShouldAnimateDice] = useState(false);
 
@@ -116,6 +117,18 @@ const MonopolyGame = ({
             clearTimeout(delayTimer);
         };
     }, [gameState.gameLog, moveAnimation]);
+
+    useEffect(() => {
+        const handleInsufficientFunds = () => {
+            setShowManageAssetsModal(true);
+        };
+
+        socket.on("insufficient_funds", handleInsufficientFunds);
+
+        return () => {
+            socket.off("insufficient_funds", handleInsufficientFunds);
+        };
+    }, []);
 
     const handleRollDice = () => {
         socket.emit("player_action", {
@@ -198,7 +211,8 @@ const MonopolyGame = ({
                 // If jump straight (go to jail) or don't move, update immediately
                 setIsAnimating(false);
             }
-        } else {
+        }
+        else {
             // If there is no movement animation, make sure the flag is disabled
             setIsAnimating(false);
         }
@@ -238,6 +252,30 @@ const MonopolyGame = ({
         });
     };
 
+    const handleMortgage = (propertyId: number) => {
+        socket.emit("player_action", {
+            roomId,
+            action: { type: "MORTGAGE_PROPERTY", payload: { propertyId } },
+            address,
+        });
+    };
+
+    const handleUnmortgage = (propertyId: number) => {
+        socket.emit("player_action", {
+            roomId,
+            action: { type: "UNMORTGAGE_PROPERTY", payload: { propertyId } },
+            address,
+        });
+    };
+
+    const handleSellHouse = (propertyId: number) => {
+        socket.emit("player_action", {
+            roomId,
+            action: { type: "SELL_HOUSE", payload: { propertyId } },
+            address,
+        });
+    };
+
     useEffect(() => {
         if (recentlyPurchasedId !== null) {
             const timer = setTimeout(() => {
@@ -260,7 +298,7 @@ const MonopolyGame = ({
         if (buildingPropertyId !== null) {
             const timer = setTimeout(() => {
                 setBuildingPropertyId(null);
-            }, 3000); // Animation duration
+            }, 3000);
 
             setBuildingAnimKey((prev) => prev + 1);
 
@@ -350,6 +388,7 @@ const MonopolyGame = ({
     const closeModal = () => {
         setModalProperty(null);
         setModalCard(null);
+        setShowManageAssetsModal(false);
     };
 
     const closeInspectModal = () => {
@@ -381,6 +420,12 @@ const MonopolyGame = ({
         setIsTradeModalOpen(false);
     };
 
+    const playerProperties: Property[] = Object.values({
+        ...gameState.properties,
+        ...gameState.railroads,
+        ...gameState.utilities,
+    }).filter((prop) => prop.owner === player.id) as Property[];
+
     return (
         <div className="grid grid-cols-[300px_1fr_300px] h-screen gap-4 p-4 max-w-[1600px] mx-auto my-0">
             <div className="flex flex-col gap-4 overflow-y-auto h-screen scroll-hide">
@@ -402,6 +447,7 @@ const MonopolyGame = ({
                         }}
                         onBuyHouse={handleBuyHouse}
                         isCurrentPlayerTurn={isCurrentPlayerTurn}
+                        onManageAssets={() => setShowManageAssetsModal(true)}
                     />
                 )}
             </div>
@@ -504,6 +550,16 @@ const MonopolyGame = ({
                 property={inspectedProperty}
                 card={null}
                 onClose={closeInspectModal}
+            />
+            <Modals
+                showManageAssetsModal={showManageAssetsModal}
+                playerProperties={playerProperties}
+                onMortgage={handleMortgage}
+                onUnmortgage={handleUnmortgage}
+                onSellHouse={handleSellHouse}
+                onClose={closeModal}
+                property={null}
+                card={null}
             />
             <TradeModal
                 isOpen={isTradeModalOpen}

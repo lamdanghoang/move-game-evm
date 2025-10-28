@@ -100,7 +100,7 @@ const PlayerStats: React.FC<PlayerStatsProps> = ({
                         </div>
                         <Button
                             onClick={() => onTrade(player)}
-                            className="text-sm bg-cyan-500 text-white px-2 py-1 rounded mt-2"
+                            className="w-full mt-2"
                         >
                             Trade
                         </Button>

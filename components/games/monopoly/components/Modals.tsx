@@ -1,11 +1,17 @@
 import { Button } from "@/components/ui/button";
 import { Card, Property } from "@/types";
+import ManageAssetsModal from "./ManageAssetsModal";
 
 interface ModalsProps {
     property: Property | null;
     card: Card | null;
     onClose: () => void;
     onBuyProperty?: (propertyId: number) => void;
+    showManageAssetsModal?: boolean;
+    playerProperties?: Property[];
+    onMortgage?: (propertyId: number) => void;
+    onUnmortgage?: (propertyId: number) => void;
+    onSellHouse?: (propertyId: number) => void;
 }
 
 const Modals: React.FC<ModalsProps> = ({
@@ -13,8 +19,13 @@ const Modals: React.FC<ModalsProps> = ({
     card,
     onClose,
     onBuyProperty,
+    showManageAssetsModal,
+    playerProperties,
+    onMortgage,
+    onUnmortgage,
+    onSellHouse,
 }) => {
-    if (!property && !card) return null;
+    if (!property && !card && !showManageAssetsModal) return null;
 
     return (
         <div
@@ -125,6 +136,15 @@ const Modals: React.FC<ModalsProps> = ({
                         </Button>
                     </div>
                 </div>
+            )}
+            {showManageAssetsModal && playerProperties && onMortgage && onUnmortgage && onSellHouse && (
+                <ManageAssetsModal
+                    properties={playerProperties}
+                    onClose={onClose}
+                    onMortgage={onMortgage}
+                    onUnmortgage={onUnmortgage}
+                    onSellHouse={onSellHouse}
+                />
             )}
         </div>
     );

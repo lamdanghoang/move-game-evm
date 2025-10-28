@@ -25,6 +25,7 @@ export interface Property {
 }
 
 export interface Railroad {
+    id?: number;
     name: string;
     price: number;
     owner: string | null;
@@ -33,6 +34,7 @@ export interface Railroad {
 }
 
 export interface Utility {
+    id?: number;
     name: string;
     price: number;
     owner: string | null;
