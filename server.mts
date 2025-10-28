@@ -15,6 +15,17 @@ import {
     RoomPlayer,
     TradeDetails,
 } from "./types";
+import {
+    GO_MONEY,
+    JAIL_FINE,
+    JAIL_POSITION,
+    MAX_JAIL_TURNS,
+    TOTAL_SQUARES,
+    UNMORTGAGE_INTEREST,
+} from "./constants/game";
+import { handleBankruptcy, hasMonopoly, getGroupProperties } from "./lib/game-logic";
+import { handleSquareLanding } from "./lib/square-handler";
+
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!;
@@ -70,6 +81,8 @@ const squares: Square[] = [
     { name: "System Tax", type: "tax", amount: 100 },
     { name: "Digital Paradise", type: "property", group: "dark_blue" },
 ];
+
+const squaresWithPositions = squares.map((s, i) => ({ ...s, position: i }));
 
 const chanceCards: Card[] = [
     {
@@ -566,264 +579,7 @@ class MonopolyGameManager {
         this.socket = socket;
         this.io = io;
         this.roomId = roomId;
-    }
-
-    private handleBankruptcy(player: Player) {
-        if (player.money < 0) {
-            player.bankrupt = true;
-            this.gameState.gameLog.push({
-                time: new Date().toLocaleTimeString(),
-                text: `${player.name} has gone bankrupt!`,
-            });
-            const activePlayers = this.gameState.players.filter(
-                (p) => !p.bankrupt
-            );
-            if (activePlayers.length === 1) {
-                this.gameState.gameWon = true;
-                this.gameState.winner = activePlayers[0];
-                this.gameState.gameLog.push({
-                    time: new Date().toLocaleTimeString(),
-                    text: `${activePlayers[0].name} has won the game!`,
-                });
-            }
-        }
-    }
-
-    private payRent(player: Player, property: any) {
-        const owner = this.gameState.players.find(
-            (p) => p.id === property.owner
-        );
-        if (!owner || owner.id === player.id || property.isMortgaged) return;
-
-        let rentAmount = 0;
-        if (property.group === "railroad") {
-            const railroadCount = owner.properties.filter(
-                (pId) => this.gameState.railroads[pId]
-            ).length;
-            rentAmount = 25 * Math.pow(2, railroadCount - 1);
-        } else if (property.group === "utility") {
-            const utilityCount = owner.properties.filter(
-                (pId) => this.gameState.utilities[pId]
-            ).length;
-            const lastRollTotal =
-                this.gameState.lastRoll[0] + this.gameState.lastRoll[1];
-            rentAmount =
-                utilityCount === 1 ? lastRollTotal * 4 : lastRollTotal * 10;
-        } else {
-            rentAmount = property.rent[property.houses];
-            if (
-                property.houses === 0 &&
-                this.hasMonopoly(owner, property.group)
-            ) {
-                const groupProperties = this.getGroupProperties(property.group);
-                const allUnmortgaged = groupProperties.every(
-                    (p) => !p.isMortgaged
-                );
-                if (allUnmortgaged) {
-                    rentAmount *= 2;
-                }
-            }
-        }
-        player.money -= rentAmount;
-        owner.money += rentAmount;
-        this.gameState.gameLog.push({
-            time: new Date().toLocaleTimeString(),
-            text: `${player.name} paid ${rentAmount} in rent to ${owner.name}.`,
-        });
-        this.handleBankruptcy(player);
-    }
-
-    private getGroupProperties(group: string) {
-        return Object.values(this.gameState.properties).filter(
-            (prop) => prop.group === group
-        );
-    }
-
-    private hasMonopoly(player: Player, group: string) {
-        const groupProperties = this.getGroupProperties(group);
-        return groupProperties.every((prop) => prop.owner === player.id);
-    }
-
-    private handleCardAction(player: Player, card: Card): boolean {
-        this.gameState.gameLog.push({
-            time: new Date().toLocaleTimeString(),
-            text: `${player.name} drew: "${card.text}"`,
-        });
-        const oldPosition = player.position;
-        let moved = false;
-
-        switch (card.action.type) {
-            case "move":
-                player.position = card.action.position!;
-                if (player.position < oldPosition) {
-                    player.money += 200;
-                    this.gameState.gameLog.push({
-                        time: new Date().toLocaleTimeString(),
-                        text: `${player.name} passed GO and collected 200 credits.`,
-                    });
-                }
-                moved = true;
-                break;
-            case "move_nearest":
-                const groupSquares = squares
-                    .map((s, i) => ({ ...s, position: i }))
-                    .filter((s) => s.group === card.action.group);
-                let minDistance = 40;
-                let nearestSquare: (Square & { position: number }) | null =
-                    null;
-                for (const square of groupSquares) {
-                    let distance = square.position - player.position;
-                    if (distance < 0) distance += 40;
-                    if (distance < minDistance) {
-                        minDistance = distance;
-                        nearestSquare = square;
-                    }
-                }
-                if (nearestSquare) {
-                    if (nearestSquare.position < player.position) {
-                        player.money += 200;
-                        this.gameState.gameLog.push({
-                            time: new Date().toLocaleTimeString(),
-                            text: `${player.name} passed GO and collected 200 credits.`,
-                        });
-                    }
-                    player.position = nearestSquare.position;
-                    moved = true;
-                }
-                break;
-            case "move_by":
-                const newPos =
-                    (player.position + card.action.amount! + 40) % 40;
-                if (card.action.amount! > 0 && newPos < player.position) {
-                    player.money += 200;
-                    this.gameState.gameLog.push({
-                        time: new Date().toLocaleTimeString(),
-                        text: `${player.name} passed GO and collected 200 credits.`,
-                    });
-                }
-                player.position = newPos;
-                moved = true;
-                break;
-            case "collect":
-                player.money += card.action.amount!;
-                break;
-            case "pay":
-                player.money -= card.action.amount!;
-                this.handleBankruptcy(player);
-                break;
-            case "go_to_jail":
-                player.position = 10;
-                player.inJail = true;
-                this.endTurn(player);
-                return true;
-            case "get_out_of_jail_free":
-                player.getOutOfJailFreeCards =
-                    (player.getOutOfJailFreeCards || 0) + 1;
-                break;
-            case "pay_per_building":
-                let houses = 0;
-                let hotels = 0;
-                for (const propId of player.properties) {
-                    const property = this.gameState.properties[propId];
-                    if (property) {
-                        if (property.houses === 5) hotels++;
-                        else houses += property.houses;
-                    }
-                }
-                player.money -=
-                    houses * card.action.house! + hotels * card.action.hotel!;
-                this.handleBankruptcy(player);
-                break;
-            case "pay_each_player":
-                this.gameState.players.forEach((p) => {
-                    if (p.id !== player.id) {
-                        p.money += card.action.amount!;
-                        player.money -= card.action.amount!;
-                    }
-                });
-                this.handleBankruptcy(player);
-                break;
-            case "collect_from_each_player":
-                this.gameState.players.forEach((p) => {
-                    if (p.id !== player.id) {
-                        p.money -= card.action.amount!;
-                        player.money += card.action.amount!;
-                        this.handleBankruptcy(p);
-                    }
-                });
-                break;
-        }
-        if (moved) {
-            this.handleSquareLanding(player);
-        }
-        return false;
-    }
-
-    private handleSquareLanding(player: Player): boolean {
-        const square = squares[player.position];
-        this.gameState.gameLog.push({
-            time: new Date().toLocaleTimeString(),
-            text: `${player.name} landed on ${square.name}`,
-        });
-        switch (square.type) {
-            case "property":
-            case "railroad":
-            case "utility":
-                const property =
-                    this.gameState.properties[player.position] ||
-                    this.gameState.railroads[player.position] ||
-                    this.gameState.utilities[player.position];
-                if (property.owner && property.owner !== player.id) {
-                    this.payRent(player, property);
-                } else if (!property.owner) {
-                    this.socket.emit("promptBuyOrAuction", {
-                        propertyId: player.position,
-                    });
-                }
-                break;
-            case "tax":
-                player.money -= square.amount!;
-                this.gameState.gameLog.push({
-                    time: new Date().toLocaleTimeString(),
-                    text: `${player.name} paid ${square.amount} in ${square.name}.`,
-                });
-                this.handleBankruptcy(player);
-                break;
-            case "go_to_jail":
-                player.position = 10;
-                player.inJail = true;
-                this.gameState.gameLog.push({
-                    time: new Date().toLocaleTimeString(),
-                    text: `${player.name} went to jail!`,
-                });
-                this.endTurn(player);
-                return true;
-            case "chance":
-                const chanceCard = this.gameState.chanceCards.pop();
-                if (chanceCard) {
-                    this.socket.emit("cardDrawn", { card: chanceCard });
-                    const turnEnded = this.handleCardAction(player, chanceCard);
-                    this.gameState.chanceCards.unshift(chanceCard);
-                    return turnEnded;
-                }
-                break;
-            case "community_chest":
-                const communityChestCard =
-                    this.gameState.communityChestCards.pop();
-                if (communityChestCard) {
-                    this.socket.emit("cardDrawn", { card: communityChestCard });
-                    const turnEnded = this.handleCardAction(
-                        player,
-                        communityChestCard
-                    );
-                    this.gameState.communityChestCards.unshift(
-                        communityChestCard
-                    );
-                    return turnEnded;
-                }
-                break;
-        }
-        return false;
+        this.endTurn = this.endTurn.bind(this);
     }
 
     async updateSupabaseAndEmit() {
@@ -834,7 +590,7 @@ class MonopolyGameManager {
         if (error) {
             console.error("Could not update game state.", error);
             this.socket.emit("error", {
-                message: "Could not update game state.",
+                message: "Could not update game state. Please try again.",
             });
         }
         this.io
@@ -875,15 +631,15 @@ class MonopolyGameManager {
                     time: new Date().toLocaleTimeString(),
                     text: `${player.name} is still in jail. Turns in jail: ${player.jailTurns}`,
                 });
-                if (player.jailTurns >= 3) {
-                    player.money -= 50;
+                if (player.jailTurns >= MAX_JAIL_TURNS) {
+                    player.money -= JAIL_FINE;
                     player.inJail = false;
                     player.jailTurns = 0;
                     this.gameState.gameLog.push({
                         time: new Date().toLocaleTimeString(),
-                        text: `${player.name} paid 50 credits to get out of jail after 3 turns.`,
+                        text: `${player.name} paid ${JAIL_FINE} credits to get out of jail after ${MAX_JAIL_TURNS} turns.`,
                     });
-                    this.handleBankruptcy(player);
+                    handleBankruptcy(this.gameState, player);
                 }
                 this.endTurn(player);
             }
@@ -896,7 +652,7 @@ class MonopolyGameManager {
 
             if (this.gameState.doubleRollCount === 3) {
                 player.inJail = true;
-                player.position = 10;
+                player.position = JAIL_POSITION;
                 this.gameState.doubleRollCount = 0;
                 this.gameState.gameLog.push({
                     time: new Date().toLocaleTimeString(),
@@ -905,16 +661,16 @@ class MonopolyGameManager {
                 this.endTurn(player);
             } else {
                 const oldPosition = player.position;
-                const newPosition = (oldPosition + total) % 40;
+                const newPosition = (oldPosition + total) % TOTAL_SQUARES;
                 player.position = newPosition;
                 if (newPosition < oldPosition) {
-                    player.money += 200;
+                    player.money += GO_MONEY;
                     this.gameState.gameLog.push({
                         time: new Date().toLocaleTimeString(),
-                        text: `${player.name} passed GO and collected 200 credits.`,
+                        text: `${player.name} passed GO and collected ${GO_MONEY} credits.`,
                     });
                 }
-                const turnEnded = this.handleSquareLanding(player);
+                const turnEnded = handleSquareLanding(this.gameState, player, squaresWithPositions, this.endTurn, {}, this.socket);
                 if (!isDouble && !turnEnded) {
                     this.gameState.hasRolled = true;
                 }
@@ -1053,7 +809,7 @@ class MonopolyGameManager {
                     time: new Date().toLocaleTimeString(),
                     text: `${highestBidderName} won the auction for ${property.name} for ${highestBid}.`,
                 });
-                this.handleBankruptcy(winner);
+                handleBankruptcy(this.gameState, winner);
             }
         } else {
             this.gameState.gameLog.push({
@@ -1209,13 +965,13 @@ class MonopolyGameManager {
             !property.isMortgaged &&
             player.money >= property.housePrice
         ) {
-            if (!this.hasMonopoly(player, property.group)) {
+            if (!hasMonopoly(this.gameState, player, property.group)) {
                 return this.socket.emit("error", {
                     message:
                         "You must own all properties in this group to build houses.",
                 });
             }
-            const groupProperties = this.getGroupProperties(property.group);
+            const groupProperties = getGroupProperties(this.gameState, property.group);
             const minHouses = Math.min(...groupProperties.map((p) => p.houses));
             if (property.houses > minHouses) {
                 return this.socket.emit("error", {
@@ -1247,7 +1003,7 @@ class MonopolyGameManager {
     sellHouse(player: Player, propertyId: number) {
         const property = this.gameState.properties[propertyId];
         if (property && property.owner === player.id && property.houses > 0) {
-            const groupProperties = this.getGroupProperties(property.group);
+            const groupProperties = getGroupProperties(this.gameState, property.group);
             const maxHouses = Math.max(...groupProperties.map((p) => p.houses));
             if (property.houses < maxHouses) {
                 return this.socket.emit("error", {
@@ -1299,7 +1055,7 @@ class MonopolyGameManager {
             this.gameState.properties[propertyId] ||
             this.gameState.railroads[propertyId] ||
             this.gameState.utilities[propertyId];
-        const cost = property.mortgageValue * 1.1;
+        const cost = property.mortgageValue * UNMORTGAGE_INTEREST;
         if (
             property &&
             property.owner === player.id &&
@@ -1321,14 +1077,14 @@ class MonopolyGameManager {
 
     payJailFine(player: Player) {
         if (player.inJail) {
-            player.money -= 50;
+            player.money -= JAIL_FINE;
             player.inJail = false;
             player.jailTurns = 0;
             this.gameState.gameLog.push({
                 time: new Date().toLocaleTimeString(),
-                text: `${player.name} paid 50 credits to get out of jail.`,
+                text: `${player.name} paid ${JAIL_FINE} credits to get out of jail.`,
             });
-            this.handleBankruptcy(player);
+            handleBankruptcy(this.gameState, player);
             this.gameState.hasRolled = false;
         }
     }
