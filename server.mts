@@ -22,10 +22,13 @@ import {
     MAX_JAIL_TURNS,
     TOTAL_SQUARES,
     UNMORTGAGE_INTEREST,
-} from "./constants/game";
-import { handleBankruptcy, hasMonopoly, getGroupProperties } from "./lib/game-logic";
-import { handleSquareLanding } from "./lib/square-handler";
-
+} from "./constants/game.js";
+import {
+    handleBankruptcy,
+    hasMonopoly,
+    getGroupProperties,
+} from "./lib/game-logic.js";
+import { handleSquareLanding } from "./lib/square-handler.js";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!;
@@ -670,7 +673,14 @@ class MonopolyGameManager {
                         text: `${player.name} passed GO and collected ${GO_MONEY} credits.`,
                     });
                 }
-                const turnEnded = handleSquareLanding(this.gameState, player, squaresWithPositions, this.endTurn, {}, this.socket);
+                const turnEnded = handleSquareLanding(
+                    this.gameState,
+                    player,
+                    squaresWithPositions,
+                    this.endTurn,
+                    {},
+                    this.socket
+                );
                 if (!isDouble && !turnEnded) {
                     this.gameState.hasRolled = true;
                 }
@@ -971,7 +981,10 @@ class MonopolyGameManager {
                         "You must own all properties in this group to build houses.",
                 });
             }
-            const groupProperties = getGroupProperties(this.gameState, property.group);
+            const groupProperties = getGroupProperties(
+                this.gameState,
+                property.group
+            );
             const minHouses = Math.min(...groupProperties.map((p) => p.houses));
             if (property.houses > minHouses) {
                 return this.socket.emit("error", {
@@ -1003,7 +1016,10 @@ class MonopolyGameManager {
     sellHouse(player: Player, propertyId: number) {
         const property = this.gameState.properties[propertyId];
         if (property && property.owner === player.id && property.houses > 0) {
-            const groupProperties = getGroupProperties(this.gameState, property.group);
+            const groupProperties = getGroupProperties(
+                this.gameState,
+                property.group
+            );
             const maxHouses = Math.max(...groupProperties.map((p) => p.houses));
             if (property.houses < maxHouses) {
                 return this.socket.emit("error", {
@@ -1237,19 +1253,27 @@ app.prepare().then(() => {
                         ]);
 
                     if (playerError) {
-                        if (playerError.code === '23505') { // Unique violation
+                        if (playerError.code === "23505") {
+                            // Unique violation
                             // Player already exists, fetch the latest game state and send it
-                            const { data: currentRoom, error: currentRoomError } = await supabase
+                            const {
+                                data: currentRoom,
+                                error: currentRoomError,
+                            } = await supabase
                                 .from("rooms")
                                 .select("game_state")
                                 .eq("id", roomId)
                                 .single();
 
                             if (currentRoomError || !currentRoom) {
-                                return socket.emit("error", { message: "Game not found." });
+                                return socket.emit("error", {
+                                    message: "Game not found.",
+                                });
                             }
                             socket.join(roomId);
-                            return socket.emit("game_updated", { gameState: currentRoom.game_state });
+                            return socket.emit("game_updated", {
+                                gameState: currentRoom.game_state,
+                            });
                         } else {
                             return socket.emit("error", {
                                 message: "Could not add player to game.",
@@ -1281,11 +1305,10 @@ app.prepare().then(() => {
                         time: new Date().toLocaleTimeString(),
                         text: `${newPlayer.name} has joined the game.`,
                     });
-                    const { error: updateError } =
-                        await supabase
-                            .from("rooms")
-                            .update({ game_state: gameState as any })
-                            .eq("id", roomId);
+                    const { error: updateError } = await supabase
+                        .from("rooms")
+                        .update({ game_state: gameState as any })
+                        .eq("id", roomId);
 
                     if (updateError) {
                         return socket.emit("error", {

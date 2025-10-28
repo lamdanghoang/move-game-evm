@@ -1,7 +1,7 @@
 import { GameState, Player, Property, Railroad, Square, Utility } from "../types";
-import { JAIL_POSITION, SquareType } from "../constants/game";
-import { handleBankruptcy, payRent } from "./game-logic";
-import { handleCardAction } from "./card-handler";
+import { JAIL_POSITION, SquareType } from "../constants/game.js";
+import { handleBankruptcy, payRent } from "./game-logic.js";
+import { handleCardAction } from "./card-handler.js";
 import { Socket } from "socket.io";
 
 export function handleSquareLanding(

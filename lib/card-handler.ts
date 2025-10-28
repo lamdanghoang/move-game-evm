@@ -1,9 +1,15 @@
 import { GameState, Player, Card, Square } from "../types";
-import { GO_MONEY, JAIL_POSITION, TOTAL_SQUARES } from "../constants/game";
-import { handleBankruptcy } from "./game-logic";
-import { handleSquareLanding } from "./square-handler";
+import { GO_MONEY, JAIL_POSITION, TOTAL_SQUARES } from "../constants/game.js";
+import { handleBankruptcy } from "./game-logic.js";
+import { handleSquareLanding } from "./square-handler.js";
 
-export function handleCardAction(gameState: GameState, player: Player, card: Card, squares: (Square & { position: number })[], endTurn: (player: Player) => void): boolean {
+export function handleCardAction(
+    gameState: GameState,
+    player: Player,
+    card: Card,
+    squares: (Square & { position: number })[],
+    endTurn: (player: Player) => void
+): boolean {
     gameState.gameLog.push({
         time: new Date().toLocaleTimeString(),
         text: `${player.name} drew: "${card.text}"`,
@@ -24,7 +30,9 @@ export function handleCardAction(gameState: GameState, player: Player, card: Car
             moved = true;
             break;
         case "move_nearest":
-            const groupSquares = squares.filter((s) => s.group === card.action.group);
+            const groupSquares = squares.filter(
+                (s) => s.group === card.action.group
+            );
             let minDistance = TOTAL_SQUARES;
             let nearestSquare: (Square & { position: number }) | null = null;
             for (const square of groupSquares) {
@@ -49,7 +57,8 @@ export function handleCardAction(gameState: GameState, player: Player, card: Car
             break;
         case "move_by":
             const newPos =
-                (player.position + card.action.amount! + TOTAL_SQUARES) % TOTAL_SQUARES;
+                (player.position + card.action.amount! + TOTAL_SQUARES) %
+                TOTAL_SQUARES;
             if (card.action.amount! > 0 && newPos < player.position) {
                 player.money += GO_MONEY;
                 gameState.gameLog.push({
@@ -73,7 +82,8 @@ export function handleCardAction(gameState: GameState, player: Player, card: Car
             endTurn(player);
             return true;
         case "get_out_of_jail_free":
-            player.getOutOfJailFreeCards = (player.getOutOfJailFreeCards || 0) + 1;
+            player.getOutOfJailFreeCards =
+                (player.getOutOfJailFreeCards || 0) + 1;
             break;
         case "pay_per_building":
             let houses = 0;
@@ -85,7 +95,8 @@ export function handleCardAction(gameState: GameState, player: Player, card: Car
                     else houses += property.houses;
                 }
             }
-            player.money -= houses * card.action.house! + hotels * card.action.hotel!;
+            player.money -=
+                houses * card.action.house! + hotels * card.action.hotel!;
             handleBankruptcy(gameState, player);
             break;
         case "pay_each_player":
@@ -108,7 +119,9 @@ export function handleCardAction(gameState: GameState, player: Player, card: Car
             break;
     }
     if (moved) {
-        return handleSquareLanding(gameState, player, squares, endTurn, { isCardMove: true });
+        return handleSquareLanding(gameState, player, squares, endTurn, {
+            isCardMove: true,
+        });
     }
     return false;
 }

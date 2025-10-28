@@ -1,5 +1,5 @@
 import { GameState, Player, Property, Railroad, Utility } from "../types";
-import { PropertyGroup } from "../constants/game";
+import { PropertyGroup } from "../constants/game.js";
 
 export function getGroupProperties(gameState: GameState, group: string) {
     return Object.values(gameState.properties).filter(
@@ -7,7 +7,11 @@ export function getGroupProperties(gameState: GameState, group: string) {
     );
 }
 
-export function hasMonopoly(gameState: GameState, player: Player, group: string) {
+export function hasMonopoly(
+    gameState: GameState,
+    player: Player,
+    group: string
+) {
     const groupProperties = getGroupProperties(gameState, group);
     return groupProperties.every((prop) => prop.owner === player.id);
 }
@@ -67,10 +71,7 @@ export function payRent(
     } else {
         const prop = property as Property;
         rentAmount = prop.rent[prop.houses];
-        if (
-            prop.houses === 0 &&
-            hasMonopoly(gameState, owner, prop.group)
-        ) {
+        if (prop.houses === 0 && hasMonopoly(gameState, owner, prop.group)) {
             const groupProperties = getGroupProperties(gameState, prop.group);
             const allUnmortgaged = groupProperties.every((p) => !p.isMortgaged);
             if (allUnmortgaged) {
