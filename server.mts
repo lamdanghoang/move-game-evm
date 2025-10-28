@@ -599,6 +599,12 @@ class MonopolyGameManager {
         this.io
             .to(this.roomId)
             .emit("game_updated", { gameState: this.gameState });
+
+        if (this.gameState.gameWon && this.gameState.winner) {
+            this.io.to(this.roomId).emit("game_over", {
+                winner: this.gameState.winner,
+            });
+        }
     }
 
     rollDice(player: Player) {

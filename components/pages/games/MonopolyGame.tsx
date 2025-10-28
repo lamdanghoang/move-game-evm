@@ -19,6 +19,7 @@ import { useParams } from "next/navigation";
 import { useAccount } from "wagmi";
 import AuctionModal from "../../games/monopoly/components/AuctionModal";
 import BuyOrAuctionModal from "../../games/monopoly/components/BuyOrAuctionModal";
+import WinnerModal from "../../games/monopoly/components/WinnerModal";
 import { Button } from "@/components/ui/button";
 
 type MoveAnimation = {
@@ -35,6 +36,8 @@ const MonopolyGame = ({
     lastRollResult,
     buyOrAuctionPropertyId,
     clearBuyOrAuction,
+    winnerInfo,
+    clearWinner,
 }: {
     gameState: GameState;
     player: Player | undefined;
@@ -43,6 +46,8 @@ const MonopolyGame = ({
     lastRollResult: [number, number] | null;
     buyOrAuctionPropertyId: number | null;
     clearBuyOrAuction: () => void;
+    winnerInfo: Player | null;
+    clearWinner: () => void;
 }) => {
     const params = useParams();
     const { id: roomId } = params;
@@ -130,6 +135,8 @@ const MonopolyGame = ({
         };
     }, []);
 
+
+
     const handleRollDice = () => {
         socket.emit("player_action", {
             roomId,
@@ -211,8 +218,7 @@ const MonopolyGame = ({
                 // If jump straight (go to jail) or don't move, update immediately
                 setIsAnimating(false);
             }
-        }
-        else {
+        } else {
             // If there is no movement animation, make sure the flag is disabled
             setIsAnimating(false);
         }
@@ -436,7 +442,7 @@ const MonopolyGame = ({
                         onTrade={() => setIsTradeModalOpen(true)}
                     />
                 )}
-                <FactionStatus />
+                {/* <FactionStatus /> */}
                 {currentPlayer && (
                     <PropertyPortfolio
                         player={currentPlayer}
@@ -537,8 +543,8 @@ const MonopolyGame = ({
             <div className="flex flex-col gap-4 overflow-y-auto h-screen scroll-hide">
                 <Chat currentPlayer={player} />
                 <GameLog events={delayedGameLog} />
-                <StoryEvents />
-                <GameAnalytics />
+                {/* <StoryEvents /> */}
+                {/* <GameAnalytics /> */}
             </div>
             <Modals
                 property={modalProperty}
@@ -680,6 +686,9 @@ const MonopolyGame = ({
                         return null;
                     })()}
             </AnimatePresence>
+            {winnerInfo && (
+                <WinnerModal winner={winnerInfo} onClose={clearWinner} />
+            )}
         </div>
     );
 };
