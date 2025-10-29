@@ -601,6 +601,13 @@ class MonopolyGameManager {
             .emit("game_updated", { gameState: this.gameState });
 
         if (this.gameState.gameWon && this.gameState.winner) {
+            const { error: statusError } = await supabase
+                .from("rooms")
+                .update({ status: "finished" })
+                .eq("id", this.roomId);
+            if (statusError) {
+                console.error("Error updating room status to finished:", statusError);
+            }
             this.io.to(this.roomId).emit("game_over", {
                 winner: this.gameState.winner,
             });
@@ -1378,6 +1385,13 @@ app.prepare().then(() => {
                             message: "Need at least 2 players to start.",
                         });
                     gameState.gameStarted = true;
+                    const { error: statusError } = await supabase
+                        .from("rooms")
+                        .update({ status: "playing" })
+                        .eq("id", roomId);
+                    if (statusError) {
+                        console.error("Error updating room status to playing:", statusError);
+                    }
                     gameState.gameLog.push({
                         time: new Date().toLocaleTimeString(),
                         text: `The game has started! It is now ${currentPlayer.name}'s turn.`,
